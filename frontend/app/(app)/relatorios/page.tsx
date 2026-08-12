@@ -3,8 +3,118 @@ import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Empty } from '../../../components/Empty';
 import { PeriodFilter } from '../../../components/PeriodFilter';
+import { Amount } from '../../../components/Amount';
 import { services } from '../../../lib/api';
-import { currentPeriod, dateLabel, money } from '../../../lib/format';
+import { currentPeriod, dateLabel } from '../../../lib/format';
 import { useAuth } from '../../../lib/auth';
-export default function ReportsPage() { const [period, setPeriod] = useState(currentPeriod); const [type, setType] = useState(''); const [categories, setCategories] = useState<string[]>([]); const { data: allCategories } = useQuery({ queryKey: ['categories'], queryFn: services.categories }); const params = new URLSearchParams({ month: String(period.month), year: String(period.year), ...(type ? { type } : {}), ...(categories.length ? { categoryIds: categories.join(',') } : {}) }); const { data, isLoading } = useQuery({ queryKey: ['report', params.toString()], queryFn: () => services.transactions(params) }); const { valuesVisible } = useAuth(); const totalIncome = data?.transactions.filter((item) => item.type === 'INCOME').reduce((sum, item) => sum + item.amount, 0) ?? 0; const totalExpense = data?.transactions.filter((item) => item.type === 'EXPENSE').reduce((sum, item) => sum + item.amount, 0) ?? 0;
-  return <><div className="page-heading"><div><h1>Relatório geral</h1><p>Analise os lançamentos por período, categoria e tipo.</p></div></div><div className="filters"><PeriodFilter {...period} onChange={setPeriod} /><div className="field"><label htmlFor="categories">Categorias</label><select id="categories" multiple value={categories} onChange={(event) => setCategories(Array.from(event.target.selectedOptions, (option) => option.value))}>{allCategories?.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></div><div className="field"><label htmlFor="report-type">Tipo</label><select id="report-type" value={type} onChange={(event) => setType(event.target.value)}><option value="">Todos</option><option value="INCOME">Entradas</option><option value="EXPENSE">Despesas</option></select></div></div><div className="cards" style={{ marginBottom: 18 }}><article className="card"><span className="card-label">Entradas filtradas</span><div className="card-value positive">{money(totalIncome, valuesVisible)}</div></article><article className="card"><span className="card-label">Despesas filtradas</span><div className="card-value negative">{money(totalExpense, valuesVisible)}</div></article><article className="card"><span className="card-label">Resultado filtrado</span><div className="card-value">{money(totalIncome - totalExpense, valuesVisible)}</div></article></div><section className="panel table-panel">{isLoading ? <div className="loading">Gerando relatório…</div> : !data?.transactions.length ? <Empty /> : <table className="table"><thead><tr><th>Data</th><th>Lançamento</th><th>Categoria</th><th>Tipo</th><th>Valor</th></tr></thead><tbody>{data.transactions.map((item) => <tr key={item.id}><td>{dateLabel(item.date)}</td><td>{item.name}</td><td>{item.category.name}</td><td>{item.type === 'INCOME' ? 'Entrada' : 'Despesa'}</td><td className={`amount ${item.type === 'INCOME' ? 'positive' : 'negative'}`}>{money(item.amount, valuesVisible)}</td></tr>)}</tbody></table>}</section></>; }
+
+export default function ReportsPage() {
+  const [period, setPeriod] = useState(currentPeriod);
+  const [type, setType] = useState('');
+  const [categories, setCategories] = useState<string[]>([]);
+  const { data: allCategories } = useQuery({ queryKey: ['categories'], queryFn: services.categories });
+  const params = new URLSearchParams({
+    month: String(period.month),
+    year: String(period.year),
+    ...(type ? { type } : {}),
+    ...(categories.length ? { categoryIds: categories.join(',') } : {}),
+  });
+  const { data, isLoading } = useQuery({ queryKey: ['report', params.toString()], queryFn: () => services.transactions(params) });
+  const { valuesVisible } = useAuth();
+  const totalIncome = data?.transactions.filter((item) => item.type === 'INCOME').reduce((sum, item) => sum + item.amount, 0) ?? 0;
+  const totalExpense = data?.transactions.filter((item) => item.type === 'EXPENSE').reduce((sum, item) => sum + item.amount, 0) ?? 0;
+
+  return (
+    <>
+      <div className="page-heading">
+        <div>
+          <span className="eyebrow">Análise</span>
+          <h1>Relatório geral</h1>
+          <p>Analise os lançamentos por período, categoria e tipo.</p>
+        </div>
+      </div>
+      <div className="filters">
+        <PeriodFilter {...period} onChange={setPeriod} />
+        <div className="field">
+          <label htmlFor="categories">Categorias</label>
+          <select
+            id="categories"
+            multiple
+            value={categories}
+            onChange={(event) => setCategories(Array.from(event.target.selectedOptions, (option) => option.value))}
+          >
+            {allCategories?.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="field">
+          <label htmlFor="report-type">Tipo</label>
+          <select id="report-type" value={type} onChange={(event) => setType(event.target.value)}>
+            <option value="">Todos</option>
+            <option value="INCOME">Entradas</option>
+            <option value="EXPENSE">Despesas</option>
+          </select>
+        </div>
+      </div>
+      <div className="cards" style={{ marginBottom: 18 }}>
+        <article className="card">
+          <span className="card-label">Entradas filtradas</span>
+          <div className="card-value positive">
+            <Amount cents={totalIncome} visible={valuesVisible} />
+          </div>
+        </article>
+        <article className="card">
+          <span className="card-label">Despesas filtradas</span>
+          <div className="card-value negative">
+            <Amount cents={totalExpense} visible={valuesVisible} />
+          </div>
+        </article>
+        <article className="card">
+          <span className="card-label">Resultado filtrado</span>
+          <div className={`card-value ${totalIncome - totalExpense >= 0 ? 'positive' : 'negative'}`}>
+            <Amount cents={totalIncome - totalExpense} visible={valuesVisible} />
+          </div>
+        </article>
+      </div>
+      <section className="panel table-panel">
+        {isLoading ? (
+          <div className="loading">Gerando relatório…</div>
+        ) : !data?.transactions.length ? (
+          <Empty />
+        ) : (
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Lançamento</th>
+                <th>Categoria</th>
+                <th>Tipo</th>
+                <th style={{ textAlign: 'right' }}>Valor</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.transactions.map((item) => (
+                <tr key={item.id}>
+                  <td>{dateLabel(item.date)}</td>
+                  <td>{item.name}</td>
+                  <td>{item.category.name}</td>
+                  <td>
+                    <span className={`badge ${item.type === 'INCOME' ? 'income' : 'expense'}`}>
+                      {item.type === 'INCOME' ? 'Entrada' : 'Despesa'}
+                    </span>
+                  </td>
+                  <td className="amount">
+                    <Amount cents={item.amount} visible={valuesVisible} tone={item.type === 'INCOME' ? 'income' : 'expense'} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </section>
+    </>
+  );
+}

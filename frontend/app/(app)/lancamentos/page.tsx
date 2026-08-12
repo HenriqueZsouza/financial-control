@@ -4,8 +4,104 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { PeriodFilter } from '../../../components/PeriodFilter';
 import { Empty } from '../../../components/Empty';
+import { Amount } from '../../../components/Amount';
 import { services } from '../../../lib/api';
-import { currentPeriod, dateLabel, money } from '../../../lib/format';
+import { currentPeriod, dateLabel } from '../../../lib/format';
 import { useAuth } from '../../../lib/auth';
-export default function TransactionsPage() { const [period, setPeriod] = useState(currentPeriod); const [type, setType] = useState(''); const { valuesVisible } = useAuth(); const client = useQueryClient(); const query = new URLSearchParams({ month: String(period.month), year: String(period.year), ...(type ? { type } : {}) }); const { data, isLoading } = useQuery({ queryKey: ['transactions', query.toString()], queryFn: () => services.transactions(query) }); async function remove(id: string) { if (!window.confirm('Excluir este lançamento? Esta ação pode ser revertida apenas diretamente no banco.')) return; await services.deleteTransaction(id); client.invalidateQueries({ queryKey: ['transactions'] }); client.invalidateQueries({ queryKey: ['summary'] }); }
-  return <><div className="page-heading"><div><h1>Lançamentos</h1><p>Confira e ajuste as movimentações do seu período.</p></div><Link href="/lancamentos/novo" className="primary page-action">+ Novo lançamento</Link></div><div className="filters"><PeriodFilter {...period} onChange={setPeriod} /><div className="field"><label htmlFor="type">Tipo</label><select id="type" value={type} onChange={(event) => setType(event.target.value)}><option value="">Todos</option><option value="INCOME">Entradas</option><option value="EXPENSE">Despesas</option></select></div></div><section className="panel table-panel">{isLoading ? <div className="loading">Carregando lançamentos…</div> : !data?.transactions.length ? <Empty /> : <table className="table"><thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Tipo</th><th>Valor</th><th /></tr></thead><tbody>{data.transactions.map((transaction) => <tr key={transaction.id}><td>{dateLabel(transaction.date)}</td><td>{transaction.name}{transaction.installmentsCount ? <small style={{ display: 'block', color: '#687589' }}>Parcela {transaction.installmentNumber}/{transaction.installmentsCount}</small> : null}</td><td>{transaction.category.name}</td><td><span className={`badge ${transaction.type === 'INCOME' ? 'income' : 'expense'}`}>{transaction.type === 'INCOME' ? 'Entrada' : 'Despesa'}</span></td><td className={`amount ${transaction.type === 'INCOME' ? 'positive' : 'negative'}`}>{transaction.type === 'INCOME' ? '+' : '−'} {money(transaction.amount, valuesVisible)}</td><td><div className="table-actions"><Link href={`/lancamentos/${transaction.id}`}>Editar</Link><button onClick={() => remove(transaction.id)}>Excluir</button></div></td></tr>)}</tbody></table>}</section></>; }
+
+export default function TransactionsPage() {
+  const [period, setPeriod] = useState(currentPeriod);
+  const [type, setType] = useState('');
+  const { valuesVisible } = useAuth();
+  const client = useQueryClient();
+  const query = new URLSearchParams({ month: String(period.month), year: String(period.year), ...(type ? { type } : {}) });
+  const { data, isLoading } = useQuery({ queryKey: ['transactions', query.toString()], queryFn: () => services.transactions(query) });
+
+  async function remove(id: string) {
+    if (!window.confirm('Excluir este lançamento? Esta ação pode ser revertida apenas diretamente no banco.')) return;
+    await services.deleteTransaction(id);
+    client.invalidateQueries({ queryKey: ['transactions'] });
+    client.invalidateQueries({ queryKey: ['summary'] });
+  }
+
+  return (
+    <>
+      <div className="page-heading">
+        <div>
+          <span className="eyebrow">Movimentações</span>
+          <h1>Lançamentos</h1>
+          <p>Confira e ajuste as movimentações do seu período.</p>
+        </div>
+        <Link href="/lancamentos/novo" className="primary page-action">
+          Novo lançamento
+        </Link>
+      </div>
+      <div className="filters">
+        <PeriodFilter {...period} onChange={setPeriod} />
+        <div className="field">
+          <label htmlFor="type">Tipo</label>
+          <select id="type" value={type} onChange={(event) => setType(event.target.value)}>
+            <option value="">Todos</option>
+            <option value="INCOME">Entradas</option>
+            <option value="EXPENSE">Despesas</option>
+          </select>
+        </div>
+      </div>
+      <section className="panel table-panel">
+        {isLoading ? (
+          <div className="loading">Carregando lançamentos…</div>
+        ) : !data?.transactions.length ? (
+          <Empty />
+        ) : (
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Descrição</th>
+                <th>Categoria</th>
+                <th>Tipo</th>
+                <th style={{ textAlign: 'right' }}>Valor</th>
+                <th />
+              </tr>
+            </thead>
+            <tbody>
+              {data.transactions.map((transaction) => (
+                <tr key={transaction.id}>
+                  <td>{dateLabel(transaction.date)}</td>
+                  <td>
+                    {transaction.name}
+                    {transaction.installmentsCount ? (
+                      <span className="installment-note">
+                        Parcela {transaction.installmentNumber}/{transaction.installmentsCount}
+                      </span>
+                    ) : null}
+                  </td>
+                  <td>{transaction.category.name}</td>
+                  <td>
+                    <span className={`badge ${transaction.type === 'INCOME' ? 'income' : 'expense'}`}>
+                      {transaction.type === 'INCOME' ? 'Entrada' : 'Despesa'}
+                    </span>
+                  </td>
+                  <td className="amount">
+                    <Amount
+                      cents={transaction.amount}
+                      visible={valuesVisible}
+                      tone={transaction.type === 'INCOME' ? 'income' : 'expense'}
+                      sign={transaction.type === 'INCOME' ? '+' : '−'}
+                    />
+                  </td>
+                  <td>
+                    <div className="table-actions">
+                      <Link href={`/lancamentos/${transaction.id}`}>Editar</Link>
+                      <button onClick={() => remove(transaction.id)}>Excluir</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </section>
+    </>
+  );
+}
