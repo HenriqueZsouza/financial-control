@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: financial-control-db
+    environment:
+      POSTGRES_USER: ${DB_USER:-financial_control}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-financial_control}
+      POSTGRES_DB: ${DB_NAME:-financial_control}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-financial_control} -d ${DB_NAME:-financial_control}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Opcional: Adminer para visualização do banco
+  adminer:
+    image: adminer:4.8.1
+    container_name: financial-control-adminer
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+
+volumes:
+  postgres_data:
