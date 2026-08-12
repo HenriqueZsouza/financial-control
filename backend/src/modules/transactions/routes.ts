@@ -1,18 +1,9 @@
 import { Router } from 'express';
-import {
-  createTransactionHandler,
-  getTransactionsHandler,
-  getTransactionByIdHandler,
-  updateTransactionHandler,
-  deleteTransactionHandler,
-} from './controller';
-
+import { create, getById, list, remove, update } from './controller';
 const router = Router();
-
-router.post('/', createTransactionHandler);
-router.get('/', getTransactionsHandler);
-router.get('/:id', getTransactionByIdHandler);
-router.patch('/:id', updateTransactionHandler);
-router.delete('/:id', deleteTransactionHandler);
-
+router.get('/', list);
+router.post('/', create);
+router.get('/:id', getById);
+router.patch('/:id', update);
+router.delete('/:id', remove);
 export default router;

@@ -1,16 +1,6 @@
-import { Request, Response, NextFunction } from 'express';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
-
-export const getCategoriesHandler = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const categories = await prisma.category.findMany({
-      orderBy: { name: 'asc' },
-    });
-
-    res.json(categories);
-  } catch (error) {
-    next(error);
-  }
-};
+import type { NextFunction, Request, Response } from 'express';
+import { prisma } from '../../shared/prisma';
+export async function list(_req: Request, res: Response, next: NextFunction) {
+  try { return res.json(await prisma.category.findMany({ orderBy: { name: 'asc' } })); }
+  catch (error) { return next(error); }
+}

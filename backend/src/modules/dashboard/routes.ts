@@ -1,8 +1,5 @@
 import { Router } from 'express';
-import { getDashboardSummaryHandler } from './controller';
-
+import { summary } from './controller';
 const router = Router();
-
-router.get('/summary', getDashboardSummaryHandler);
-
+router.get('/summary', summary);
 export default router;

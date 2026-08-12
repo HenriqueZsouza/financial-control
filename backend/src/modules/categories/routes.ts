@@ -1,8 +1,5 @@
 import { Router } from 'express';
-import { getCategoriesHandler } from './controller';
-
+import { list } from './controller';
 const router = Router();
-
-router.get('/', getCategoriesHandler);
-
+router.get('/', list);
 export default router;

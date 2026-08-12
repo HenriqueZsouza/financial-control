@@ -1,21 +1,37 @@
-import dotenv from 'dotenv';
-dotenv.config();
+import { z } from 'zod';
 
-export const config = {
-  port: parseInt(process.env.BACKEND_PORT || '3333', 10),
-  jwtSecret: process.env.JWT_SECRET || 'dev-secret-change-in-production',
-  jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
-  frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
-  databaseUrl: process.env.DATABASE_URL,
-} as const;
+const schema = z.object({
+  PORT: z.coerce.number().int().positive().default(3333),
+  DATABASE_URL: z.string().url(),
+  JWT_SECRET: z.string().min(16),
+  JWT_EXPIRES_IN: z.string().default('7d'),
+  // Uma URL ou várias separadas por vírgula (ex.: quando o Next sobe em :3001)
+  FRONTEND_URL: z
+    .string()
+    .default('http://localhost:3000,http://localhost:3001'),
+});
 
-export function validateConfig() {
-  const required = ['databaseUrl', 'jwtSecret'];
-  const missing = required.filter((key) => !config[key as keyof typeof config]);
-  if (missing.length > 0) {
-    throw new Error(`Configurações obrigatórias ausentes: ${missing.join(', ')}`);
-  }
-  if (config.jwtSecret.length < 32) {
-    console.warn('⚠️  JWT_SECRET deve ter pelo menos 32 caracteres em produção');
+const parsed = schema.safeParse(process.env);
+if (!parsed.success) {
+  console.error('Invalid environment configuration:', parsed.error.flatten().fieldErrors);
+  throw new Error('Invalid environment configuration');
+}
+
+const frontendOrigins = parsed.data.FRONTEND_URL.split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+for (const origin of frontendOrigins) {
+  const result = z.string().url().safeParse(origin);
+  if (!result.success) {
+    throw new Error(`Invalid FRONTEND_URL origin: ${origin}`);
   }
 }
+
+export const config = {
+  port: parsed.data.PORT,
+  databaseUrl: parsed.data.DATABASE_URL,
+  jwtSecret: parsed.data.JWT_SECRET,
+  jwtExpiresIn: parsed.data.JWT_EXPIRES_IN,
+  frontendOrigins,
+};

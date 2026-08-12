@@ -1,20 +1,17 @@
-import { Request, Response, NextFunction } from 'express';
+import type { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
-import { config } from '../../shared/config';
+import { config } from '../config';
 
-export const authenticate = (req: Request, res: Response, next: NextFunction) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Missing or malformed authorization header' });
-  }
-
-  const token = authHeader.split(' ')[1];
+export function authenticate(req: Request, res: Response, next: NextFunction) {
+  const token = req.headers.authorization?.match(/^Bearer\s+(.+)$/i)?.[1];
+  if (!token) return res.status(401).json({ code: 'UNAUTHENTICATED', message: 'Token de acesso ausente.' });
 
   try {
-    const payload = jwt.verify(token, config.jwtSecret) as { userId: string };
+    const payload = jwt.verify(token, config.jwtSecret);
+    if (typeof payload === 'string' || typeof payload.userId !== 'string') throw new Error('invalid token');
     req.userId = payload.userId;
-    next();
-  } catch (err) {
-    return res.status(401).json({ error: 'Invalid or expired token' });
+    return next();
+  } catch {
+    return res.status(401).json({ code: 'UNAUTHENTICATED', message: 'Token de acesso inválido ou expirado.' });
   }
-};
+}

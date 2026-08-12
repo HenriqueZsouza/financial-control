@@ -1,0 +1,1 @@
+export default function BillsPage() { return <><div className="page-heading"><div><h1>Contas a pagar</h1><p>Organize vencimentos e lembretes futuramente.</p></div></div><div className="placeholder"><div className="illustration">◷</div><h2>Em construção</h2><p>O gerenciamento de contas a pagar ainda não faz parte desta versão.</p></div></>; }

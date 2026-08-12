@@ -2,39 +2,20 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-const initialCategories = [
-  { name: 'Mercado', slug: 'mercado', icon: '🛒' },
-  { name: 'Farmácia', slug: 'farmacia', icon: '💊' },
-  { name: 'Vestuário', slug: 'vestuario', icon: '👕' },
-  { name: 'Estudos', slug: 'estudos', icon: '📚' },
-  { name: 'Moradia', slug: 'moradia', icon: '🏠' },
-  { name: 'Transporte', slug: 'transporte', icon: '🚌' },
-  { name: 'Lazer', slug: 'lazer', icon: '🎮' },
-  { name: 'Saúde', slug: 'saude', icon: '🏥' },
-  { name: 'Educação', slug: 'educacao', icon: '🎓' },
-  { name: 'Outros', slug: 'outros', icon: '📦' },
-];
+const categories = [
+  ['Mercado', 'mercado'], ['Farmácia', 'farmacia'], ['Vestuário', 'vestuario'],
+  ['Estudos', 'estudos'], ['Moradia', 'moradia'], ['Transporte', 'transporte'],
+  ['Lazer', 'lazer'], ['Saúde', 'saude'], ['Educação', 'educacao'], ['Outros', 'outros'],
+] as const;
 
 async function main() {
-  console.log('🌱 Iniciando seed de categorias...');
-
-  for (const category of initialCategories) {
-    await prisma.category.upsert({
-      where: { slug: category.slug },
-      update: {},
-      create: category,
-    });
-    console.log(`  ✓ ${category.name} (${category.slug})`);
-  }
-
-  console.log('✅ Seed concluído!');
+  await Promise.all(categories.map(([name, slug]) => prisma.category.upsert({
+    where: { slug }, update: { name }, create: { name, slug },
+  })));
 }
 
-main()
-  .catch((e) => {
-    console.error('❌ Erro no seed:', e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+main().then(() => prisma.$disconnect()).catch(async (error) => {
+  console.error(error);
+  await prisma.$disconnect();
+  process.exit(1);
+});

@@ -1,0 +1,9 @@
+'use client';
+import { ArcElement, BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, Tooltip } from 'chart.js';
+import { Bar, Doughnut } from 'react-chartjs-2';
+import type { Summary } from '../lib/types';
+ChartJS.register(ArcElement, BarElement, CategoryScale, LinearScale, Tooltip, Legend);
+export function DashboardCharts({ summary, visible }: { summary: Summary; visible: boolean }) {
+  const colors = ['#0a6a5b', '#49a08f', '#b9dfd3', '#f4c95d', '#e99372', '#7d8fb3', '#b789b8', '#749f82'];
+  return <div className="grid-two"><section className="panel"><h2>Entradas e saídas</h2><div className="chart"><Bar data={{ labels: ['Entradas', 'Saídas'], datasets: [{ data: visible ? [summary.totalIncome / 100, summary.totalExpense / 100] : [0, 0], backgroundColor: ['#0a6a5b', '#d86a72'], borderRadius: 6 }] }} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (item) => visible ? `R$ ${Number(item.raw).toFixed(2).replace('.', ',')}` : 'Oculto' } } }, scales: { y: { ticks: { callback: (value) => `R$ ${value}` } } } }} /></div></section><section className="panel"><h2>Despesas por categoria</h2><div className="chart">{summary.byCategory.length ? <Doughnut data={{ labels: summary.byCategory.map((item) => item.name), datasets: [{ data: visible ? summary.byCategory.map((item) => item.total / 100) : summary.byCategory.map(() => 1), backgroundColor: colors, borderWidth: 0 }] }} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' }, tooltip: { callbacks: { label: (item) => visible ? `${item.label}: R$ ${Number(item.raw).toFixed(2).replace('.', ',')}` : `${item.label}: oculto` } } } }} /> : <div className="empty">Ainda não há despesas neste período.</div>}</div></section></div>;
+}

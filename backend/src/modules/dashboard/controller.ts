@@ -1,120 +1,30 @@
-import { Request, Response, NextFunction } from 'express';
-import { PrismaClient } from '@prisma/client';
+import type { NextFunction, Request, Response } from 'express';
+import { TransactionType } from '@prisma/client';
+import { AppError } from '../../shared/http';
+import { prisma } from '../../shared/prisma';
 
-const prisma = new PrismaClient();
-
-export const getDashboardSummaryHandler = async (req: Request, res: Response, next: NextFunction) => {
+export async function summary(req: Request, res: Response, next: NextFunction) {
   try {
-    const userId = req.userId;
-    const { month, year } = req.query;
-
-    // Determine the month and year to query
     const now = new Date();
-    const targetMonth = month ? parseInt(month as string, 10) : now.getMonth() + 1; // 1-12
-    const targetYear = year ? parseInt(year as string, 10) : now.getFullYear();
-
-    // Validate month
-    if (isNaN(targetMonth) || targetMonth < 1 || targetMonth > 12) {
-      return res.status(400).json({ error: 'Invalid month' });
+    const month = req.query.month === undefined ? now.getMonth() + 1 : Number(req.query.month);
+    const year = req.query.year === undefined ? now.getFullYear() : Number(req.query.year);
+    if (!Number.isInteger(month) || month < 1 || month > 12 || !Number.isInteger(year) || year < 2000 || year > 9999) {
+      throw new AppError(400, 'INVALID_PERIOD', 'Mês e ano devem formar um período válido.');
     }
-    if (isNaN(targetYear)) {
-      return res.status(400).json({ error: 'Invalid year' });
-    }
-
-    // Start and end of the month
-    const startDate = new Date(targetYear, targetMonth - 1, 1);
-    const endDate = new Date(targetYear, targetMonth, 1); // first day of next month
-
-    // Aggregate income and expense
-    const [incomeResult, expenseResult, expenseByCategory] = await Promise.all([
-      prisma.transaction.aggregate({
-        where: {
-          userId,
-          type: 'INCOME',
-          date: {
-            gte: startDate,
-            lt: endDate,
-          },
-          deletedAt: null,
-        },
-        _sum: {
-          amount: true,
-        },
-      }),
-      prisma.transaction.aggregate({
-        where: {
-          userId,
-          type: 'EXPENSE',
-          date: {
-            gte: startDate,
-            lt: endDate,
-          },
-          deletedAt: null,
-        },
-        _sum: {
-          amount: true,
-        },
-      }),
-      prisma.transaction.groupBy({
-        by: ['categoryId'],
-        where: {
-          userId,
-          type: 'EXPENSE',
-          date: {
-            gte: startDate,
-            lt: endDate,
-          },
-          deletedAt: null,
-        },
-        _sum: {
-          amount: true,
-        },
-        orderBy: {
-          _sum: {
-            amount: 'desc',
-          },
-        },
-      }),
+    const date = { gte: new Date(Date.UTC(year, month - 1, 1)), lt: new Date(Date.UTC(year, month, 1)) };
+    const where = { userId: req.userId!, deletedAt: null, date };
+    const [incomes, expenses, expenseGroups] = await Promise.all([
+      prisma.transaction.aggregate({ where: { ...where, type: TransactionType.INCOME }, _sum: { amount: true } }),
+      prisma.transaction.aggregate({ where: { ...where, type: TransactionType.EXPENSE }, _sum: { amount: true } }),
+      prisma.transaction.groupBy({ by: ['categoryId'], where: { ...where, type: TransactionType.EXPENSE }, _sum: { amount: true }, orderBy: { _sum: { amount: 'desc' } } }),
     ]);
-
-    // Get category names for the expense breakdown
-    const categoryIds = expenseByCategory.map((group) => group.categoryId);
-    const categories = await prisma.category.findMany({
-      where: {
-        id: {
-          in: categoryIds,
-        },
-      },
-      select: {
-        id: true,
-        name: true,
-      },
+    const categories = await prisma.category.findMany({ where: { id: { in: expenseGroups.map((entry) => entry.categoryId) } }, select: { id: true, name: true } });
+    const names = new Map(categories.map((category) => [category.id, category.name]));
+    const totalIncome = incomes._sum.amount ?? 0;
+    const totalExpense = expenses._sum.amount ?? 0;
+    return res.json({
+      period: { month, year }, totalIncome, totalExpense, balance: totalIncome - totalExpense,
+      byCategory: expenseGroups.map((entry) => ({ categoryId: entry.categoryId, name: names.get(entry.categoryId) ?? 'Sem categoria', total: entry._sum.amount ?? 0 })),
     });
-
-    const categoryMap = new Map<string, string>();
-    categories.forEach((cat) => {
-      categoryMap.set(cat.id, cat.name);
-    });
-
-    const byCategory = expenseByCategory
-      .map((group) => ({
-        categoryId: group.categoryId,
-        name: categoryMap.get(group.categoryId) || 'Unknown',
-        total: group._sum.amount || 0,
-      }))
-      .filter((item) => item.total > 0); // just in case
-
-    const totalIncome = incomeResult._sum.amount || 0;
-    const totalExpense = expenseResult._sum.amount || 0;
-    const balance = totalIncome - totalExpense;
-
-    res.json({
-      totalIncome,
-      totalExpense,
-      balance,
-      byCategory,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
+  } catch (error) { return next(error); }
+}

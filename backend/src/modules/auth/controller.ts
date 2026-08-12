@@ -1,152 +1,54 @@
-import { Request, Response, NextFunction } from 'express';
-import { PrismaClient } from '@prisma/client';
-import { z } from 'zod';
+import type { NextFunction, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { z } from 'zod';
+import { prisma } from '../../shared/prisma';
+import { AppError, notFound } from '../../shared/http';
 import { config } from '../../shared/config';
 
-const prisma = new PrismaClient();
-
-// Zod schemas for validation
+const phone = z.string().trim().min(8, 'Informe um telefone válido.').max(30);
 const registerSchema = z.object({
-  firstName: z.string().min(1, 'First name is required'),
-  lastName: z.string().min(1, 'Last name is required'),
-  email: z.string().email('Invalid email'),
-  phone: z.string().min(1, 'Phone is required'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-  confirmPassword: z.string().min(6, 'Confirm password must be at least 6 characters'),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-});
+  firstName: z.string().trim().min(1).max(80),
+  lastName: z.string().trim().min(1).max(80),
+  email: z.string().trim().email().max(254).transform((value) => value.toLowerCase()),
+  phone,
+  password: z.string().min(8, 'A senha precisa ter pelo menos 8 caracteres.').max(128),
+  confirmPassword: z.string(),
+}).refine((data) => data.password === data.confirmPassword, { path: ['confirmPassword'], message: 'As senhas não coincidem.' });
 
-const loginSchema = z.object({
-  email: z.string().email('Invalid email'),
-  password: z.string().min(1, 'Password is required'),
-});
+const loginSchema = z.object({ email: z.string().trim().email().transform((v) => v.toLowerCase()), password: z.string().min(1) });
 
-// Helper: generate JWT
-const generateToken = (userId: string): string => {
-  return jwt.sign({ userId }, config.jwtSecret, {
-    expiresIn: config.jwtExpiresIn,
-  });
-};
+const userSelect = { id: true, firstName: true, lastName: true, email: true, phone: true, createdAt: true, updatedAt: true } as const;
+const sign = (userId: string) => jwt.sign({ userId }, config.jwtSecret, { expiresIn: config.jwtExpiresIn as jwt.SignOptions['expiresIn'] });
 
-// POST /api/auth/register
-export const registerHandler = async (req: Request, res: Response, next: NextFunction) => {
+export async function register(req: Request, res: Response, next: NextFunction) {
   try {
-    const validated = registerSchema.parse(req.body);
+    const input = registerSchema.parse(req.body);
+    const existing = await prisma.user.findUnique({ where: { email: input.email } });
+    if (existing) throw new AppError(409, 'EMAIL_ALREADY_EXISTS', 'Já existe uma conta com este email.');
+    const { confirmPassword: _confirmPassword, password, ...data } = input;
+    const passwordHash = await bcrypt.hash(password, 12);
+    const user = await prisma.user.create({ data: { ...data, passwordHash }, select: userSelect });
+    return res.status(201).json({ user });
+  } catch (error) { return next(error); }
+}
 
-    // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email: validated.email },
-    });
-    if (existingUser) {
-      return res.status(409).json({ error: 'User already exists with this email' });
-    }
-
-    // Hash password
-    const salt = await bcrypt.genSalt(10);
-    const passwordHash = await bcrypt.hash(validated.password, salt);
-
-    // Create user
-    const user = await prisma.user.create({
-      data: {
-        firstName: validated.firstName,
-        lastName: validated.lastName,
-        email: validated.email,
-        phone: validated.phone,
-        passwordHash,
-      },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        email: true,
-        phone: true,
-        createdAt: true,
-      },
-    });
-
-    // Generate token
-    const token = generateToken(user.id);
-
-    res.status(201).json({
-      user,
-      token,
-    });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Validation failed', details: error.errors });
-    }
-    next(error);
-  }
-};
-
-// POST /api/auth/login
-export const loginHandler = async (req: Request, res: Response, next: NextFunction) => {
+export async function login(req: Request, res: Response, next: NextFunction) {
   try {
-    const validated = loginSchema.parse(req.body);
-
-    // Find user
-    const user = await prisma.user.findUnique({
-      where: { email: validated.email },
-    });
-    if (!user) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+    const input = loginSchema.parse(req.body);
+    const user = await prisma.user.findUnique({ where: { email: input.email } });
+    if (!user || user.deletedAt || !(await bcrypt.compare(input.password, user.passwordHash))) {
+      throw new AppError(401, 'INVALID_CREDENTIALS', 'Email ou senha inválidos.');
     }
+    const { passwordHash: _passwordHash, ...safeUser } = user;
+    return res.json({ token: sign(user.id), user: safeUser });
+  } catch (error) { return next(error); }
+}
 
-    // Verify password
-    const passwordValid = await bcrypt.compare(validated.password, user.passwordHash);
-    if (!passwordValid) {
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
-
-    // Generate token
-    const token = generateToken(user.id);
-
-    // Return user without password
-    const { passwordHash, ...userWithoutPassword } = user;
-
-    res.json({
-      user: userWithoutPassword,
-      token,
-    });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Validation failed', details: error.errors });
-    }
-    next(error);
-  }
-};
-
-// GET /api/auth/me
-export const meHandler = async (req: Request, res: Response, next: NextFunction) => {
+export async function me(req: Request, res: Response, next: NextFunction) {
   try {
-    // The auth middleware will attach userId to req
-    const userId = req.userId;
-    if (!userId) {
-      return res.status(401).json({ error: 'Not authenticated' });
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        email: true,
-        phone: true,
-        createdAt: true,
-      },
-    });
-
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    res.json({ user });
-  } catch (error) {
-    next(error);
-  }
-};
+    const user = await prisma.user.findFirst({ where: { id: req.userId, deletedAt: null }, select: userSelect });
+    if (!user) throw notFound('Usuário');
+    return res.json({ user });
+  } catch (error) { return next(error); }
+}

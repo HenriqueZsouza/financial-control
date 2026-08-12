@@ -1,126 +1,52 @@
 # Financial Control
 
-Aplicação web de controle financeiro familiar — v1 local (Next.js + Express + PostgreSQL).
-
-## Stack
-
-| Camada | Tecnologias |
-|--------|-------------|
-| Frontend | Next.js 14 (App Router), TypeScript, MUI, Tailwind CSS, React Query, Chart.js |
-| Backend | Express, TypeScript, Prisma ORM, PostgreSQL, Zod, Bcrypt |
-| Banco | PostgreSQL 16 (Docker) |
-| Dev | Docker Compose, Prisma Studio, Adminer |
-
-## Estrutura
-
-```
-financial-control/
-├── frontend/          # Next.js app
-├── backend/           # Express API
-├── docs/              # PRD, ARCHITECTURE, API
-├── docker-compose.yml # PostgreSQL + Adminer
-├── .env.example       # Variáveis de ambiente
-└── README.md
-```
+Aplicação local de controle financeiro familiar, composta por um frontend Next.js, API Express e PostgreSQL.
 
 ## Pré-requisitos
 
-- Docker & Docker Compose
-- Node.js 20+ e pnpm (ou npm/yarn)
-- Git
+- Node.js 20+ e npm ou pnpm
+- Docker e Docker Compose
 
-## Setup local
+## Executar localmente
 
 ```bash
-# 1. Clone e entre na pasta
-cd financial-control
-
-# 2. Suba o banco
+# Na raiz do projeto, suba o PostgreSQL e o Adminer
+cp .env.example .env
 docker compose up -d
 
-# 3. Configure variáveis de ambiente
-cp .env.example .env
-# Edite .env se necessário (senhas, portas, JWT_SECRET)
-
-# 4. Backend
+# API (outro terminal)
+cp backend/.env.example backend/.env
 cd backend
-pnpm install
-pnpm prisma generate
-pnpm prisma migrate dev --name init
-pnpm prisma db seed   # categorias iniciais
-pnpm dev              # http://localhost:3333
+npm install
+npm run prisma:generate
+npm run prisma:migrate -- --name init
+npm run prisma:seed
+npm run dev
 
-# 5. Frontend (novo terminal)
-cd ../frontend
-pnpm install
-pnpm dev              # http://localhost:3000
-```
-
-## Acessos
-
-| Serviço | URL |
-|---------|-----|
-| Frontend | http://localhost:3000 |
-| Backend API | http://localhost:3333 |
-| Prisma Studio | `cd backend && pnpm prisma studio` |
-| Adminer | http://localhost:8080 (Server: `postgres`, User/Pass/DB: `financial_control`) |
-
-## Scripts úteis
-
-```bash
-# Backend
-cd backend
-pnpm dev              # Desenvolvimento (tsx watch)
-pnpm build            # Compila para dist/
-pnpm start            # Produção (node dist/)
-pnpm prisma studio    # UI do banco
-pnpm prisma migrate dev  # Nova migration
-pnpm prisma db seed   # Reexecuta seed
-
-# Frontend
+# Interface (outro terminal)
+cp frontend/.env.example frontend/.env.local
 cd frontend
-pnpm dev              # Desenvolvimento (Turbopack)
-pnpm build            # Build produção
-pnpm start            # Servidor produção
-pnpm lint             # ESLint
+npm install
+npm run dev
 ```
 
-## Variáveis de ambiente
+Abra `http://localhost:3000`. A API responde em `http://localhost:3333`; `GET /health` verifica sua disponibilidade. O Adminer fica em `http://localhost:8080` (servidor `postgres`, usuário, senha e banco conforme `.env`).
 
-Copie `.env.example` para `.env` e ajuste:
+## Scripts
 
-```env
-# Database
-DB_USER=financial_control
-DB_PASSWORD=financial_control
-DB_NAME=financial_control
-DB_HOST=localhost
-DB_PORT=5432
-DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?schema=public
+| Diretório | Comando | Função |
+|---|---|---|
+| `backend` | `npm run dev` | API com recarga automática |
+| `backend` | `npm run build` | Validação/compilação TypeScript |
+| `backend` | `npm run prisma:studio` | Interface do banco |
+| `frontend` | `npm run dev` | Interface local na porta 3000 |
+| `frontend` | `npm run build` | Build de produção e validação do Next |
 
-# Backend
-BACKEND_PORT=3333
-JWT_SECRET=gere-uma-chave-forte-aqui
-JWT_EXPIRES_IN=7d
+## Decisões importantes
 
-# Frontend
-FRONTEND_PORT=3000
-NEXT_PUBLIC_API_URL=http://localhost:3333
-```
+- Valores são enviados e armazenados em **centavos** (`15000` equivale a R$ 150,00).
+- A sessão usa JWT Bearer para o ambiente local. Os valores começam ocultos depois de cada login.
+- Lançamentos excluídos recebem `deletedAt`; não são removidos do banco.
+- Parcelamentos geram uma linha por mês, com a diferença de arredondamento na última parcela.
 
-## Documentação
-
-- `docs/PRD.md` — Requisitos do produto (v1)
-- `docs/ARCHITECTURE.md` — Decisões de arquitetura (a criar)
-- `docs/API.md` — Contratos da API (a criar)
-
-## Roadmap
-
-- **v1** (atual): Web + API local
-- **v2**: Integração Telegram via Hermes Agent
-- **v3**: Deploy produção, HTTPS, monitoramento
-- **v4**: Conta familiar, cartão de crédito, contas a pagar
-
-## Licença
-
-MIT — uso livre para estudo e projeto pessoal.
+Veja [arquitetura](docs/ARCHITECTURE.md), [contratos da API](docs/API.md) e [componentes](docs/components.md) para detalhes.

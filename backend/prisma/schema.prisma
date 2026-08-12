@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -21,47 +18,50 @@ enum PaymentType {
 }
 
 model User {
-  id            String         @id @default(cuid())
-  firstName     String
-  lastName      String
-  email         String         @unique
-  phone         String
-  passwordHash  String
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  deletedAt     DateTime?
-  transactions  Transaction[]
+  id           String        @id @default(cuid())
+  firstName    String
+  lastName     String
+  email        String        @unique
+  phone        String
+  passwordHash String
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  deletedAt    DateTime?
+  transactions Transaction[]
+
   @@map("users")
 }
 
 model Category {
-  id          String        @id @default(cuid())
-  name        String
-  slug        String        @unique
-  icon        String?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  id           String        @id @default(cuid())
+  name         String
+  slug         String        @unique
+  icon         String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
   transactions Transaction[]
+
   @@map("categories")
 }
 
 model Transaction {
-  id                String        @id @default(cuid())
-  userId            String
-  categoryId        String
-  type              TransactionType
-  name              String
-  amount            Int           // armazenado em centavos
-  paymentType       PaymentType
-  installmentsCount Int?
+  id                 String          @id @default(cuid())
+  userId             String
+  categoryId         String
+  type               TransactionType
+  name               String
+  amount             Int
+  paymentType        PaymentType
+  installmentsCount  Int?
   installmentGroupId String?
-  installmentNumber Int?
-  date              DateTime      // data de competência
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
-  deletedAt         DateTime?
-  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  category          Category      @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  installmentNumber  Int?
+  date               DateTime
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  deletedAt          DateTime?
+  user               User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category           Category        @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
   @@index([userId, date])
   @@index([userId, deletedAt])
   @@index([installmentGroupId])
