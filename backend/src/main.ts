@@ -32,5 +32,5 @@ const controllers = {
   transactions: new TransactionsController(new CreateTransactionUseCase(transactions, categories, clock, ids), new ListTransactionsUseCase(transactions), new GetTransactionUseCase(transactions), new UpdateTransactionUseCase(transactions, categories), new DeleteTransactionUseCase(transactions, clock)),
   dashboard: new DashboardController(new GetDashboardSummaryUseCase(transactions, clock)),
 };
-const app = createHttpApp(controllers, tokens, config.frontendOrigins);
+const app = createHttpApp(controllers, tokens, config.frontendOrigins, config.swaggerEnabled);
 app.listen(config.port, () => console.info(`API disponível em http://localhost:${config.port}`));

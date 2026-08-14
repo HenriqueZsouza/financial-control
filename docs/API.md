@@ -2,6 +2,8 @@
 
 Base local: `http://localhost:3333`. Erros usam `{ "code", "message", "details?" }`. Rotas autenticadas exigem `Authorization: Bearer <token>`.
 
+Para explorar o contrato completo e executar requests localmente, abra a [Swagger UI](http://localhost:3333/api/docs). A spec JSON está em `http://localhost:3333/api/docs.json`; esta página permanece como resumo rápido.
+
 | Método | Rota | Corpo/consulta | Retorno |
 |---|---|---|---|
 | POST | `/api/auth/register` | nome, sobrenome, email, telefone, senha, confirmação | usuário (201) |

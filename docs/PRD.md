@@ -73,6 +73,7 @@ Quando o produto evoluir para produção, este documento será atualizado com re
 | Zod         | Validação de entrada (somente HTTP)       |
 | Bcrypt      | Hash de senhas (adapter)                  |
 | Dotenv      | Variáveis de ambiente                     |
+| OpenAPI / Swagger UI | Documentação interativa HTTP — ver [PRD-SWAGGER.md](./PRD-SWAGGER.md) |
 | Docker      | PostgreSQL e serviços auxiliares        |
 
 Arquitetura alvo do backend: hexagonal (Ports & Adapters). Spec de migração: [`PRD-HEXAGONAL.md`](./PRD-HEXAGONAL.md).

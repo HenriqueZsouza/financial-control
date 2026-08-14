@@ -14,7 +14,7 @@ adapters (HTTP, Prisma, bcrypt, JWT) → application (use cases e ports) → dom
 
 - **Domain** contém entidades, tipos, Value Objects (`Money`, `Period`) e `DomainError`; não conhece framework ou infraestrutura.
 - **Application** declara ports e implementa casos de uso. Ela recebe repositórios, segurança, relógio e gerador de IDs por injeção.
-- **Adapters inbound** traduzem HTTP: Express, rotas, controllers finos, DTOs Zod, autenticação e apresentação de erros.
+- **Adapters inbound** traduzem HTTP: Express, rotas, controllers finos, DTOs Zod, autenticação e apresentação de erros. A documentação OpenAPI/Swagger centralizada também vive em `adapters/inbound/http/openapi/`.
 - **Adapters outbound** implementam os ports por Prisma, bcrypt, JWT, relógio e UUID. Enums Prisma são mapeados nesta borda.
 - **`backend/src/main.ts`** é o composition root: é o único lugar que instancia adaptadores e os conecta aos casos de uso.
 

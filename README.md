@@ -30,7 +30,7 @@ npm install
 npm run dev
 ```
 
-Abra `http://localhost:3000`. A API responde em `http://localhost:3333`; `GET /health` verifica sua disponibilidade. O Adminer fica em `http://localhost:8080` (servidor `postgres`, usuário, senha e banco conforme `.env`).
+Abra `http://localhost:3000`. A API responde em `http://localhost:3333`; `GET /health` verifica sua disponibilidade e a [Swagger UI](http://localhost:3333/api/docs) permite explorar e testar o contrato. O Adminer fica em `http://localhost:8080` (servidor `postgres`, usuário, senha e banco conforme `.env`).
 
 ## Scripts
 

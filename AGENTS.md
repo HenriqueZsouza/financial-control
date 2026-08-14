@@ -48,7 +48,7 @@ Não altere rotas, payloads, status ou erros sem atualizar `docs/API.md` e o PRD
 
 - Regra de negócio: `domain/` ou `application/use-cases/`.
 - Novo I/O: port outbound e adapter Prisma/security/clock.
-- HTTP ou Zod: `adapters/inbound/http/`.
+- HTTP, Zod ou OpenAPI/Swagger: `adapters/inbound/http/` (a spec centralizada fica em `openapi/`).
 - Instanciação e injeção: somente `main.ts`.
 
 Para criar um caso de uso: (1) modele tipos/erros no domínio; (2) crie o port inbound e o use case; (3) adicione port outbound se necessário; (4) implemente o adapter; (5) crie DTO Zod e controller fino; (6) registre em `main.ts`; (7) teste o use case com fakes dos ports.
