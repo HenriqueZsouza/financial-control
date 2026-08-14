@@ -5,8 +5,9 @@ import { CategoriesController } from './adapters/inbound/http/controllers/catego
 import { DashboardController } from './adapters/inbound/http/controllers/dashboard-controller.js';
 import { TransactionsController } from './adapters/inbound/http/controllers/transactions-controller.js';
 import { UsersController } from './adapters/inbound/http/controllers/users-controller.js';
-import { SystemClock, UuidGenerator } from './adapters/outbound/clock/system-clock.js';
+import { SystemClock } from './adapters/outbound/clock/system-clock.js';
 import { PrismaCategoryRepository } from './adapters/outbound/prisma/prisma-category-repository.js';
+import { PrismaSequenceIdGenerator } from './adapters/outbound/prisma/prisma-sequence-id-generator.js';
 import { PrismaTransactionRepository } from './adapters/outbound/prisma/prisma-transaction-repository.js';
 import { PrismaUserRepository } from './adapters/outbound/prisma/prisma-user-repository.js';
 import { BcryptPasswordHasher } from './adapters/outbound/security/bcrypt-password-hasher.js';
@@ -25,7 +26,7 @@ import { UpdateCurrentUserUseCase } from './application/use-cases/users/update-c
 import { config } from './config/index.js';
 
 const users = new PrismaUserRepository(); const categories = new PrismaCategoryRepository(); const transactions = new PrismaTransactionRepository();
-const clock = new SystemClock(); const ids = new UuidGenerator(); const hasher = new BcryptPasswordHasher(); const tokens = new JwtTokenIssuer(config.jwtSecret, config.jwtExpiresIn);
+const clock = new SystemClock(); const ids = new PrismaSequenceIdGenerator(); const hasher = new BcryptPasswordHasher(); const tokens = new JwtTokenIssuer(config.jwtSecret, config.jwtExpiresIn);
 const controllers = {
   auth: new AuthController(new RegisterUserUseCase(users, hasher), new LoginUserUseCase(users, hasher, tokens), new GetCurrentUserUseCase(users)),
   users: new UsersController(new UpdateCurrentUserUseCase(users, hasher)), categories: new CategoriesController(new ListCategoriesUseCase(categories)),

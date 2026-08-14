@@ -2,15 +2,15 @@ export type TransactionType = 'INCOME' | 'EXPENSE';
 export type PaymentType = 'CASH' | 'INSTALLMENT';
 
 export interface Transaction {
-  id: string;
-  userId: string;
-  categoryId: string;
+  id: number;
+  userId: number;
+  categoryId: number;
   type: TransactionType;
   name: string;
   amount: number;
   paymentType: PaymentType;
   installmentsCount: number | null;
-  installmentGroupId: string | null;
+  installmentGroupId: number | null;
   installmentNumber: number | null;
   date: Date;
   createdAt: Date;

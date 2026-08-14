@@ -1,6 +1,6 @@
 # API — Financial Control
 
-Base local: `http://localhost:3333`. Erros usam `{ "code", "message", "details?" }`. Rotas autenticadas exigem `Authorization: Bearer <token>`.
+Base local: `http://localhost:3333`. Erros usam `{ "code", "message", "details?" }`. Rotas autenticadas exigem `Authorization: Bearer <token>`. IDs de usuário, categoria, lançamento e grupo de parcelas são inteiros sequenciais (`1`, `2`, `3`…).
 
 Para explorar o contrato completo e executar requests localmente, abra a [Swagger UI](http://localhost:3333/api/docs). A spec JSON está em `http://localhost:3333/api/docs.json`; esta página permanece como resumo rápido.
 
@@ -19,7 +19,7 @@ Para explorar o contrato completo e executar requests localmente, abra a [Swagge
 Exemplo de criação à vista:
 
 ```json
-{ "type": "EXPENSE", "name": "Mercado", "amount": 15000, "categoryId": "<id>", "paymentType": "CASH", "date": "2026-08-12" }
+{ "type": "EXPENSE", "name": "Mercado", "amount": 15000, "categoryId": 1, "paymentType": "CASH", "date": "2026-08-12" }
 ```
 
 Para parcelar, envie `paymentType: "INSTALLMENT"` e `installmentsCount`. A API distribui as parcelas mensalmente.

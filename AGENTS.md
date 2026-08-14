@@ -16,7 +16,8 @@ backend/src/
     inbound/http/         # Express, controllers, DTOs Zod, middleware e presenters
     outbound/prisma/      # Prisma e mapeamento de enums
     outbound/security/    # bcrypt e JWT
-    outbound/clock/       # relógio e UUID reais
+    outbound/clock/       # relógio
+    outbound/prisma/      # Prisma, sequência de IDs e mapeamento de enums
   config/                 # configuração de ambiente
   main.ts                 # único composition root
 ```

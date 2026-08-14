@@ -192,7 +192,7 @@ Cada port inbound é uma interface com **um** método. Controllers HTTP chamam o
 | `PasswordHasher` | `hash` / `compare` | bcryptjs |
 | `TokenIssuer` | `sign(userId)` / `verify(token) → userId` | jsonwebtoken |
 | `Clock` | `now()` | `Date` (facilita teste de competência/mês) |
-| `IdGenerator` | UUID do `installmentGroupId` | `crypto.randomUUID` |
+| `IdGenerator` | inteiro sequencial do `installmentGroupId` | `nextval` PostgreSQL |
 
 **Regra:** nenhum use case instancia Prisma, bcrypt ou jwt. Só recebe ports no construtor (ou factory no composition root).
 

@@ -245,7 +245,7 @@ Exemplo CASH (já alinhado a `API.md`):
   "type": "EXPENSE",
   "name": "Mercado",
   "amount": 15000,
-  "categoryId": "<id>",
+  "categoryId": 1,
   "paymentType": "CASH",
   "date": "2026-08-12"
 }

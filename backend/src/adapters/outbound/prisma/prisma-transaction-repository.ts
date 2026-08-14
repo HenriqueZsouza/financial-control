@@ -13,16 +13,16 @@ export class PrismaTransactionRepository implements TransactionRepository {
   async createMany(data: CreateTransactionData[]): Promise<Transaction[]> {
     return prisma.$transaction(data.map((entry) => prisma.transaction.create({ data: mapCreate(entry), include: { category: true } })));
   }
-  list(userId: string, filters: TransactionFilters): Promise<Transaction[]> {
+  list(userId: number, filters: TransactionFilters): Promise<Transaction[]> {
     return prisma.transaction.findMany({
       where: { userId, deletedAt: null, ...(filters.period ? { date: { gte: filters.period.start, lt: filters.period.end } } : {}), ...(filters.categoryIds?.length ? { categoryId: { in: filters.categoryIds } } : {}), ...(filters.type ? { type: toPrismaType(filters.type) } : {}) },
       include: { category: true }, orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
     });
   }
-  findActiveById(userId: string, id: string): Promise<Transaction | null> { return prisma.transaction.findFirst({ where: { id, userId, deletedAt: null }, include: { category: true } }); }
-  update(id: string, data: UpdateTransactionData): Promise<Transaction> { return prisma.transaction.update({ where: { id }, data: mapUpdate(data), include: { category: true } }); }
-  async softDelete(id: string, deletedAt: Date) { await prisma.transaction.update({ where: { id }, data: { deletedAt } }); }
-  async summary(userId: string, period: TransactionFilters['period']) {
+  findActiveById(userId: number, id: number): Promise<Transaction | null> { return prisma.transaction.findFirst({ where: { id, userId, deletedAt: null }, include: { category: true } }); }
+  update(id: number, data: UpdateTransactionData): Promise<Transaction> { return prisma.transaction.update({ where: { id }, data: mapUpdate(data), include: { category: true } }); }
+  async softDelete(id: number, deletedAt: Date) { await prisma.transaction.update({ where: { id }, data: { deletedAt } }); }
+  async summary(userId: number, period: TransactionFilters['period']) {
     const where = { userId, deletedAt: null, date: { gte: period!.start, lt: period!.end } };
     const [incomes, expenses, groups] = await Promise.all([
       prisma.transaction.aggregate({ where: { ...where, type: TransactionType.INCOME }, _sum: { amount: true } }),

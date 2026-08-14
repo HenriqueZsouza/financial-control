@@ -5,7 +5,7 @@ import type { UpdateUserData, UserRepository } from '../../ports/outbound/user-r
 
 export class UpdateCurrentUserUseCase implements UpdateCurrentUser {
   constructor(private readonly users: UserRepository, private readonly hasher: PasswordHasher) {}
-  async execute(userId: string, input: UpdateCurrentUserInput) {
+  async execute(userId: number, input: UpdateCurrentUserInput) {
     if (!(await this.users.findActiveById(userId))) throw notFound('Usuário');
     const data: UpdateUserData = {};
     if (input.firstName !== undefined) data.firstName = input.firstName;

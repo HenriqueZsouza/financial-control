@@ -5,7 +5,7 @@ import type { TransactionRepository } from '../../ports/outbound/transaction-rep
 
 export class UpdateTransactionUseCase implements UpdateTransaction {
   constructor(private readonly transactions: TransactionRepository, private readonly categories: CategoryRepository) {}
-  async execute(userId: string, id: string, input: UpdateTransactionInput) {
+  async execute(userId: number, id: number, input: UpdateTransactionInput) {
     const current = await this.transactions.findActiveById(userId, id);
     if (!current) throw notFound('Lançamento');
     if (input.categoryId && !(await this.categories.exists(input.categoryId))) throw new DomainError('INVALID_CATEGORY', 'A categoria informada não existe.');

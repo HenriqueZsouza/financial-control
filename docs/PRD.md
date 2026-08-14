@@ -280,15 +280,15 @@ financial-control/
 ## 8. Modelo de dados (resumo)
 
 ### User
-- `id`, `firstName`, `lastName`, `email` (unique), `phone`, `passwordHash`
+- `id` (inteiro sequencial), `firstName`, `lastName`, `email` (unique), `phone`, `passwordHash`
 - `createdAt`, `updatedAt`, `deletedAt?`
 
 ### Category
-- `id`, `name`, `slug`, `icon?`
+- `id` (inteiro sequencial), `name`, `slug`, `icon?`
 - `createdAt`, `updatedAt`
 
 ### Transaction
-- `id`, `userId`, `categoryId`
+- `id`, `userId`, `categoryId` (inteiros sequenciais)
 - `type`: `INCOME` | `EXPENSE`
 - `name`, `amount`
 - `paymentType`: `CASH` | `INSTALLMENT`

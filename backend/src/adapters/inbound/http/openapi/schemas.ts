@@ -14,7 +14,7 @@ export const openApiSchemas = {
     type: 'object',
     required: ['id', 'firstName', 'lastName', 'email', 'phone', 'createdAt', 'updatedAt'],
     properties: {
-      id: { type: 'string', format: 'uuid' },
+      id: { type: 'integer', minimum: 1, example: 1 },
       firstName: { type: 'string', maxLength: 80, example: 'Ana' },
       lastName: { type: 'string', maxLength: 80, example: 'Silva' },
       email: { type: 'string', format: 'email', maxLength: 254, example: 'ana@example.com' },
@@ -61,7 +61,7 @@ export const openApiSchemas = {
   },
   Category: {
     type: 'object', required: ['id', 'name', 'slug', 'icon', 'createdAt', 'updatedAt'], properties: {
-      id: { type: 'string', format: 'uuid' }, name: { type: 'string', example: 'Alimentação' }, slug: { type: 'string', example: 'alimentacao' },
+      id: { type: 'integer', minimum: 1, example: 1 }, name: { type: 'string', example: 'Alimentação' }, slug: { type: 'string', example: 'alimentacao' },
       icon: { type: 'string', nullable: true, example: 'shopping_cart' }, createdAt: dateTime, updatedAt: dateTime,
     },
   },
@@ -71,11 +71,11 @@ export const openApiSchemas = {
     type: 'object',
     required: ['id', 'userId', 'categoryId', 'type', 'name', 'amount', 'paymentType', 'date', 'createdAt', 'updatedAt', 'deletedAt'],
     properties: {
-      id: { type: 'string', format: 'uuid' }, userId: { type: 'string', format: 'uuid' }, categoryId: { type: 'string', format: 'uuid' },
+      id: { type: 'integer', minimum: 1, example: 1 }, userId: { type: 'integer', minimum: 1, example: 1 }, categoryId: { type: 'integer', minimum: 1, example: 1 },
       type: { $ref: '#/components/schemas/TransactionType' }, name: { type: 'string', maxLength: 160, example: 'Mercado' },
       amount: { type: 'integer', minimum: 1, description: 'Valor monetário em centavos.', example: 15000 },
       paymentType: { $ref: '#/components/schemas/PaymentType' }, installmentsCount: { type: 'integer', minimum: 2, maximum: 120, nullable: true },
-      installmentGroupId: { type: 'string', format: 'uuid', nullable: true }, installmentNumber: { type: 'integer', nullable: true },
+      installmentGroupId: { type: 'integer', minimum: 1, nullable: true, example: 1 }, installmentNumber: { type: 'integer', nullable: true },
       date: dateTime, createdAt: dateTime, updatedAt: dateTime, deletedAt: { ...dateTime, nullable: true },
       category: { $ref: '#/components/schemas/Category' },
     },
@@ -83,7 +83,7 @@ export const openApiSchemas = {
   CreateTransactionRequest: {
     type: 'object', required: ['type', 'name', 'amount', 'categoryId', 'paymentType'], properties: {
       type: { $ref: '#/components/schemas/TransactionType' }, name: { type: 'string', minLength: 1, maxLength: 160, example: 'Mercado' },
-      amount: { type: 'integer', minimum: 1, description: 'Valor monetário em centavos.', example: 15000 }, categoryId: { type: 'string', minLength: 1, example: '<id>' },
+      amount: { type: 'integer', minimum: 1, description: 'Valor monetário em centavos.', example: 15000 }, categoryId: { type: 'integer', minimum: 1, example: 1 },
       paymentType: { $ref: '#/components/schemas/PaymentType' }, installmentsCount: { type: 'integer', minimum: 2, maximum: 120 },
       date: { type: 'string', format: 'date', pattern: '^\\d{4}-\\d{2}-\\d{2}$', example: '2026-08-12' },
     },
@@ -91,7 +91,7 @@ export const openApiSchemas = {
   UpdateTransactionRequest: {
     type: 'object', properties: {
       type: { $ref: '#/components/schemas/TransactionType' }, name: { type: 'string', minLength: 1, maxLength: 160 },
-      amount: { type: 'integer', minimum: 1, description: 'Valor monetário em centavos.' }, categoryId: { type: 'string', minLength: 1 },
+      amount: { type: 'integer', minimum: 1, description: 'Valor monetário em centavos.' }, categoryId: { type: 'integer', minimum: 1 },
       paymentType: { $ref: '#/components/schemas/PaymentType' }, date: { type: 'string', format: 'date', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
     },
   },
@@ -99,7 +99,7 @@ export const openApiSchemas = {
   TransactionResponse: { type: 'object', required: ['transaction'], properties: { transaction: { $ref: '#/components/schemas/Transaction' } } },
   CategoryTotal: {
     type: 'object', required: ['categoryId', 'name', 'total'], properties: {
-      categoryId: { type: 'string', format: 'uuid' }, name: { type: 'string', example: 'Alimentação' }, total: { type: 'integer', description: 'Valor monetário em centavos.', example: 15000 },
+      categoryId: { type: 'integer', minimum: 1, example: 1 }, name: { type: 'string', example: 'Alimentação' }, total: { type: 'integer', description: 'Valor monetário em centavos.', example: 15000 },
     },
   },
   DashboardSummary: {

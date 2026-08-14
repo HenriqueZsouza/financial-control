@@ -35,9 +35,10 @@ export function TransactionForm({ initial, onSaved }: { initial?: Transaction; o
     if (!checked.success) return setError(checked.error.issues[0].message);
     const amount = toCents(checked.data.amount);
     if (!Number.isInteger(amount) || amount <= 0) return setError('Informe um valor monetário válido.');
-    const { installmentsCount, ...base } = checked.data;
+    const { installmentsCount, categoryId, ...base } = checked.data;
     const body: Record<string, unknown> = {
       ...base,
+      categoryId: Number(categoryId),
       amount,
       ...(base.paymentType === 'INSTALLMENT' ? { installmentsCount: Number(installmentsCount) } : {}),
     };

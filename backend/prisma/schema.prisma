@@ -18,7 +18,7 @@ enum PaymentType {
 }
 
 model User {
-  id           String        @id @default(cuid())
+  id           Int           @id @default(autoincrement())
   firstName    String
   lastName     String
   email        String        @unique
@@ -33,7 +33,7 @@ model User {
 }
 
 model Category {
-  id           String        @id @default(cuid())
+  id           Int           @id @default(autoincrement())
   name         String
   slug         String        @unique
   icon         String?
@@ -45,15 +45,15 @@ model Category {
 }
 
 model Transaction {
-  id                 String          @id @default(cuid())
-  userId             String
-  categoryId         String
+  id                 Int             @id @default(autoincrement())
+  userId             Int
+  categoryId         Int
   type               TransactionType
   name               String
   amount             Int
   paymentType        PaymentType
   installmentsCount  Int?
-  installmentGroupId String?
+  installmentGroupId Int?
   installmentNumber  Int?
   date               DateTime
   createdAt          DateTime        @default(now())

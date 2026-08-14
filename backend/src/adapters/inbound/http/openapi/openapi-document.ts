@@ -41,21 +41,21 @@ export const openApiDocument = {
       get: {
         tags: ['Transactions'], summary: 'Lista lançamentos', security: bearerSecurity,
         description: '`month` e `year` devem ser informados juntos ou omitidos. `categoryIds` aceita IDs separados por vírgula ou repetidos na query.',
-        parameters: [...periodParameters, { name: 'categoryIds', in: 'query', required: false, schema: { oneOf: [{ type: 'string' }, { type: 'array', items: { type: 'string' } }] }, description: 'IDs de categoria, separados por vírgula ou repetidos.' }, { name: 'type', in: 'query', required: false, schema: { $ref: '#/components/schemas/TransactionType' } }],
+        parameters: [...periodParameters, { name: 'categoryIds', in: 'query', required: false, schema: { oneOf: [{ type: 'string' }, { type: 'array', items: { type: 'integer', minimum: 1 } }] }, description: 'IDs numéricos de categoria, separados por vírgula ou repetidos.' }, { name: 'type', in: 'query', required: false, schema: { $ref: '#/components/schemas/TransactionType' } }],
         responses: { '200': { description: 'Lançamentos', ...json('TransactionsResponse') }, '400': error('Mês e ano devem formar um período válido.', 'VALIDATION_ERROR'), '401': error('Token ausente ou inválido.', 'UNAUTHENTICATED') },
       },
       post: {
         tags: ['Transactions'], summary: 'Cria um ou mais lançamentos', security: bearerSecurity,
         description: '`amount` é inteiro em centavos. `INSTALLMENT` exige `installmentsCount` entre 2 e 120; o parcelamento cria várias linhas no mesmo grupo, distribuindo o resto na última parcela.',
         requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/CreateTransactionRequest' }, examples: {
-          cash: { summary: 'Compra à vista', value: { type: 'EXPENSE', name: 'Mercado', amount: 15000, categoryId: '<id>', paymentType: 'CASH', date: '2026-08-12' } },
-          installment: { summary: 'Compra parcelada', value: { type: 'EXPENSE', name: 'Notebook', amount: 360000, categoryId: '<id>', paymentType: 'INSTALLMENT', installmentsCount: 12, date: '2026-08-12' } },
+          cash: { summary: 'Compra à vista', value: { type: 'EXPENSE', name: 'Mercado', amount: 15000, categoryId: 1, paymentType: 'CASH', date: '2026-08-12' } },
+          installment: { summary: 'Compra parcelada', value: { type: 'EXPENSE', name: 'Notebook', amount: 360000, categoryId: 1, paymentType: 'INSTALLMENT', installmentsCount: 12, date: '2026-08-12' } },
         } } } },
         responses: { '201': { description: 'Lançamento(s) criado(s)', ...json('TransactionsResponse') }, '400': error('Categoria inválida.', 'INVALID_CATEGORY'), '401': error('Token ausente ou inválido.', 'UNAUTHENTICATED'), '500': error('Ocorreu um erro inesperado.', 'INTERNAL_ERROR') },
       },
     },
     '/api/transactions/{id}': {
-      parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' }, description: 'ID do lançamento.' }],
+      parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer', minimum: 1 }, description: 'ID numérico sequencial do lançamento.' }],
       get: { tags: ['Transactions'], summary: 'Obtém um lançamento', security: bearerSecurity, responses: { '200': { description: 'Lançamento', ...json('TransactionResponse') }, '401': error('Token ausente ou inválido.', 'UNAUTHENTICATED'), '404': error('Lançamento não encontrado.', 'NOT_FOUND') } },
       patch: { tags: ['Transactions'], summary: 'Atualiza um lançamento', security: bearerSecurity, description: '`amount` é inteiro em centavos. A quantidade de parcelas não pode ser alterada.', requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/UpdateTransactionRequest' } } } }, responses: { '200': { description: 'Lançamento atualizado', ...json('TransactionResponse') }, '400': error('Categoria inválida ou dados inválidos.', 'INVALID_CATEGORY'), '401': error('Token ausente ou inválido.', 'UNAUTHENTICATED'), '404': error('Lançamento não encontrado.', 'NOT_FOUND'), '422': error('Alteração de parcela não permitida.', 'INSTALLMENT_RESTRICTION') } },
       delete: { tags: ['Transactions'], summary: 'Exclui um lançamento', security: bearerSecurity, description: 'A exclusão é lógica (soft delete); o registro não é removido fisicamente.', responses: { '204': { description: 'Lançamento removido sem corpo de resposta' }, '401': error('Token ausente ou inválido.', 'UNAUTHENTICATED'), '404': error('Lançamento não encontrado.', 'NOT_FOUND') } },
@@ -63,7 +63,7 @@ export const openApiDocument = {
     '/api/dashboard/summary': {
       get: {
         tags: ['Dashboard'], summary: 'Obtém o resumo financeiro', security: bearerSecurity, description: '`month` e `year` devem ser informados juntos ou omitidos; sem filtro, usa o período atual.', parameters: periodParameters,
-        responses: { '200': { description: 'Resumo do período', ...json('DashboardSummary', { period: { month: 8, year: 2026 }, totalIncome: 500000, totalExpense: 150000, balance: 350000, byCategory: [{ categoryId: '<id>', name: 'Alimentação', total: 150000 }] }) }, '400': error('Mês e ano devem formar um período válido.', 'VALIDATION_ERROR'), '401': error('Token ausente ou inválido.', 'UNAUTHENTICATED') },
+        responses: { '200': { description: 'Resumo do período', ...json('DashboardSummary', { period: { month: 8, year: 2026 }, totalIncome: 500000, totalExpense: 150000, balance: 350000, byCategory: [{ categoryId: 1, name: 'Alimentação', total: 150000 }] }) }, '400': error('Mês e ano devem formar um período válido.', 'VALIDATION_ERROR'), '401': error('Token ausente ou inválido.', 'UNAUTHENTICATED') },
       },
     },
   },

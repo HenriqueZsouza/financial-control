@@ -3,8 +3,9 @@ const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use a data no formato A
   const [year, month, day] = value.split('-').map(Number); const date = new Date(Date.UTC(year, month - 1, day));
   return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
 }, 'Data inválida.');
+export const idParamSchema = z.coerce.number().int().positive();
 const fields = z.object({
-  type: z.enum(['INCOME', 'EXPENSE']), name: z.string().trim().min(1).max(160), amount: z.number().int().positive('O valor deve ser informado em centavos.'), categoryId: z.string().min(1),
+  type: z.enum(['INCOME', 'EXPENSE']), name: z.string().trim().min(1).max(160), amount: z.number().int().positive('O valor deve ser informado em centavos.'), categoryId: z.coerce.number().int().positive(),
   paymentType: z.enum(['CASH', 'INSTALLMENT']), installmentsCount: z.number().int().min(2).max(120).optional(), date: isoDate.optional(),
 });
 export const createTransactionSchema = fields.superRefine((data, context) => {

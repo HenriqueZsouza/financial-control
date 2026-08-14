@@ -19,9 +19,9 @@ export const services = {
   categories: () => api<Category[]>('/api/categories'),
   summary: (month: number, year: number) => api<Summary>(`/api/dashboard/summary?month=${month}&year=${year}`),
   transactions: (query: URLSearchParams) => api<{ transactions: Transaction[] }>(`/api/transactions?${query.toString()}`),
-  transaction: (id: string) => api<{ transaction: Transaction }>(`/api/transactions/${id}`),
+  transaction: (id: number | string) => api<{ transaction: Transaction }>(`/api/transactions/${id}`),
   createTransaction: (data: Record<string, unknown>) => api<{ transactions: Transaction[] }>('/api/transactions', { method: 'POST', body: JSON.stringify(data) }),
-  updateTransaction: (id: string, data: Record<string, unknown>) => api<{ transaction: Transaction }>(`/api/transactions/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
-  deleteTransaction: (id: string) => api<void>(`/api/transactions/${id}`, { method: 'DELETE' }),
+  updateTransaction: (id: number | string, data: Record<string, unknown>) => api<{ transaction: Transaction }>(`/api/transactions/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  deleteTransaction: (id: number | string) => api<void>(`/api/transactions/${id}`, { method: 'DELETE' }),
   updateProfile: (data: Record<string, string>) => api<{ user: User }>('/api/users/me', { method: 'PATCH', body: JSON.stringify(data) }),
 };

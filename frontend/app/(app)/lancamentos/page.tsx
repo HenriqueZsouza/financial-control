@@ -17,7 +17,7 @@ export default function TransactionsPage() {
   const query = new URLSearchParams({ month: String(period.month), year: String(period.year), ...(type ? { type } : {}) });
   const { data, isLoading } = useQuery({ queryKey: ['transactions', query.toString()], queryFn: () => services.transactions(query) });
 
-  async function remove(id: string) {
+  async function remove(id: number) {
     if (!window.confirm('Excluir este lançamento? Esta ação pode ser revertida apenas diretamente no banco.')) return;
     await services.deleteTransaction(id);
     client.invalidateQueries({ queryKey: ['transactions'] });
