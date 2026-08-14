@@ -67,13 +67,15 @@ Quando o produto evoluir para produção, este documento será atualizado com re
 |-------------|-------------------------------------------|
 | TypeScript  | Linguagem                                 |
 | Node.js     | Runtime                                   |
-| Express     | API HTTP                                  |
-| Prisma      | ORM                                       |
+| Express     | API HTTP (adapter inbound)                |
+| Prisma      | ORM (adapter outbound)                    |
 | PostgreSQL  | Banco de dados relacional                 |
-| Zod         | Validação de entrada                      |
-| Bcrypt      | Hash de senhas                            |
+| Zod         | Validação de entrada (somente HTTP)       |
+| Bcrypt      | Hash de senhas (adapter)                  |
 | Dotenv      | Variáveis de ambiente                     |
 | Docker      | PostgreSQL e serviços auxiliares        |
+
+Arquitetura alvo do backend: hexagonal (Ports & Adapters). Spec de migração: [`PRD-HEXAGONAL.md`](./PRD-HEXAGONAL.md).
 
 ### Estrutura do repositório
 ```

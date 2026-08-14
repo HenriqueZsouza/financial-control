@@ -1,15 +1,27 @@
 # Arquitetura
 
-O projeto é um monorepo local com `frontend/` (Next.js App Router) e `backend/` (Express + Prisma). O PostgreSQL é iniciado pelo Docker Compose. O frontend acessa a API por `NEXT_PUBLIC_API_URL`.
+O projeto é um monorepo local com `frontend/` (Next.js App Router) e `backend/` (Express + Prisma). PostgreSQL roda pelo Docker Compose e o frontend acessa a API por `NEXT_PUBLIC_API_URL`.
 
-## Camadas
+## Backend: Arquitetura Hexagonal
 
-- **Frontend:** páginas, componentes de UI, React Query para estado remoto e `lib/api.ts` para o contrato HTTP.
-- **API:** rotas Express delegam para controllers; Zod valida a entrada antes de qualquer escrita.
-- **Persistência:** Prisma é o único acesso ao PostgreSQL. Valores monetários são `Int` em centavos, eliminando erro de ponto flutuante.
+O backend organiza dependências de fora para dentro:
 
-## Segurança e regras
+```
+adapters (HTTP, Prisma, bcrypt, JWT) → application (use cases e ports) → domain
+                                                    ↑
+                                          ports inbound/outbound
+```
 
-O login retorna um JWT Bearer, guardado apenas no `localStorage` para a sessão local da v1. O middleware `authenticate` extrai `userId` do token. Toda query de transação aplica esse `userId` e `deletedAt: null`; portanto, um usuário não lê nem altera recursos de outro.
+- **Domain** contém entidades, tipos, Value Objects (`Money`, `Period`) e `DomainError`; não conhece framework ou infraestrutura.
+- **Application** declara ports e implementa casos de uso. Ela recebe repositórios, segurança, relógio e gerador de IDs por injeção.
+- **Adapters inbound** traduzem HTTP: Express, rotas, controllers finos, DTOs Zod, autenticação e apresentação de erros.
+- **Adapters outbound** implementam os ports por Prisma, bcrypt, JWT, relógio e UUID. Enums Prisma são mapeados nesta borda.
+- **`backend/src/main.ts`** é o composition root: é o único lugar que instancia adaptadores e os conecta aos casos de uso.
 
-Exclusões são lógicas: `DELETE` preenche `deletedAt`. Parcelamentos criam N transações em meses consecutivos com um `installmentGroupId`; a última parcela recebe os centavos restantes. O backend é a fonte de verdade para essas regras.
+O contrato HTTP em [API.md](./API.md) permanece o mesmo; HTTP é apenas o adapter inbound. Prisma continua sendo o único acesso ao PostgreSQL, e valores monetários seguem sendo `Int` em centavos.
+
+As regras operacionais para futuras mudanças estão em [AGENTS.md](../AGENTS.md), com espelhos para Claude e Cursor. A especificação completa da migração está em [PRD-HEXAGONAL.md](./PRD-HEXAGONAL.md).
+
+## Invariantes
+
+JWT Bearer identifica o usuário. Toda query padrão de transação aplica `userId` e `deletedAt: null`; exclusões são lógicas. Parcelamentos criam lançamentos mensais de mesmo grupo e deixam os centavos restantes na última parcela. Erros HTTP usam `{ code, message, details? }`.

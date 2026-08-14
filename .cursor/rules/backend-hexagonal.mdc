@@ -1,0 +1,9 @@
+---
+description: Arquitetura hexagonal do backend — obrigatória em qualquer mudança em backend/
+globs: backend/**/*.{ts,tsx},backend/prisma/**
+alwaysApply: false
+---
+
+Siga a seção **Backend hexagonal** de `AGENTS.md`.
+
+Checklist: regras no domínio/use case; I/O por port outbound; Prisma somente em `adapters/outbound/prisma`; Express/Zod somente em `adapters/inbound/http`; enums Prisma não vazam ao domínio; wiring somente em `src/main.ts`; preserve `userId`, soft delete, centavos, parcelas, JWT Bearer e `{ code, message, details? }`; cubra use cases com fakes.
