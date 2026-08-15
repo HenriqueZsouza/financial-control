@@ -1,9 +1,18 @@
 'use client';
+
+import Button from '@mui/material/Button';
+import Divider from '@mui/material/Divider';
+import Paper from '@mui/material/Paper';
+import Stack from '@mui/material/Stack';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
 import { FormEvent, useState } from 'react';
 import { z } from 'zod';
 import { Feedback } from '../../../components/Feedback';
+import { PageHeader } from '../../../components/PageHeader';
 import { ApiError, services } from '../../../lib/api';
 import { useAuth } from '../../../lib/auth';
+import { useFeedback } from '../../../lib/feedback';
 
 const schema = z
   .object({
@@ -21,19 +30,23 @@ const schema = z
 
 export default function ProfilePage() {
   const { user, setUser } = useAuth();
+  const { notify } = useFeedback();
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   if (!user) return null;
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
-    setSuccess(null);
-    const raw = Object.fromEntries(new FormData(event.currentTarget)) as Record<string, string>;
+    const form = event.currentTarget;
+    const raw = Object.fromEntries(new FormData(form)) as Record<string, string>;
     const checked = schema.safeParse(raw);
     if (!checked.success) return setError(checked.error.issues[0].message);
-    const data: Record<string, string> = { firstName: checked.data.firstName, lastName: checked.data.lastName, phone: checked.data.phone };
+    const data: Record<string, string> = {
+      firstName: checked.data.firstName,
+      lastName: checked.data.lastName,
+      phone: checked.data.phone,
+    };
     if (checked.data.password) {
       data.password = checked.data.password;
       data.confirmPassword = checked.data.confirmPassword;
@@ -42,9 +55,9 @@ export default function ProfilePage() {
     try {
       const result = await services.updateProfile(data);
       setUser(result.user);
-      setSuccess('Perfil atualizado com sucesso.');
-      (event.target as HTMLFormElement).password.value = '';
-      (event.target as HTMLFormElement).confirmPassword.value = '';
+      (form.elements.namedItem('password') as HTMLInputElement).value = '';
+      (form.elements.namedItem('confirmPassword') as HTMLInputElement).value = '';
+      notify('Perfil atualizado.');
     } catch (reason) {
       setError(reason instanceof ApiError ? reason.message : 'Não foi possível atualizar o perfil.');
     } finally {
@@ -54,53 +67,37 @@ export default function ProfilePage() {
 
   return (
     <>
-      <div className="page-heading">
-        <div>
-          <span className="eyebrow">Conta</span>
-          <h1>Meu perfil</h1>
-          <p>Mantenha seus dados pessoais atualizados.</p>
-        </div>
-      </div>
-      <form className="form-card" onSubmit={submit}>
-        <Feedback error={error} success={success} />
-        <div className="fields-two">
-          <div className="field">
-            <label htmlFor="firstName">Nome</label>
-            <input id="firstName" name="firstName" defaultValue={user.firstName} />
-          </div>
-          <div className="field">
-            <label htmlFor="lastName">Sobrenome</label>
-            <input id="lastName" name="lastName" defaultValue={user.lastName} />
-          </div>
-        </div>
-        <div className="fields-two">
-          <div className="field">
-            <label htmlFor="email">Email</label>
-            <input id="email" name="email" value={user.email} disabled readOnly />
-          </div>
-          <div className="field">
-            <label htmlFor="phone">Telefone</label>
-            <input id="phone" name="phone" defaultValue={user.phone} />
-          </div>
-        </div>
-        <hr className="form-divider" />
-        <p className="hint">Preencha os campos abaixo somente se quiser trocar sua senha.</p>
-        <div className="fields-two">
-          <div className="field">
-            <label htmlFor="password">Nova senha</label>
-            <input id="password" name="password" type="password" autoComplete="new-password" />
-          </div>
-          <div className="field">
-            <label htmlFor="confirmPassword">Confirmar nova senha</label>
-            <input id="confirmPassword" name="confirmPassword" type="password" autoComplete="new-password" />
-          </div>
-        </div>
-        <div className="form-actions">
-          <button className="primary" disabled={pending}>
-            {pending ? 'Salvando…' : 'Salvar perfil'}
-          </button>
-        </div>
-      </form>
+      <PageHeader eyebrow="Conta" title="Meu perfil" description="Mantenha seus dados pessoais atualizados." />
+      <Paper
+        component="form"
+        onSubmit={submit}
+        sx={{ maxWidth: 720, p: 3.5, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}
+      >
+        <Feedback error={error} />
+        <Stack spacing={2.5}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+            <TextField name="firstName" label="Nome" defaultValue={user.firstName} />
+            <TextField name="lastName" label="Sobrenome" defaultValue={user.lastName} />
+          </Stack>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+            <TextField name="email" label="Email" value={user.email} disabled />
+            <TextField name="phone" label="Telefone" defaultValue={user.phone} />
+          </Stack>
+          <Divider />
+          <Typography color="text.secondary" variant="body2">
+            Preencha os campos abaixo somente se quiser trocar sua senha.
+          </Typography>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+            <TextField name="password" label="Nova senha" type="password" autoComplete="new-password" />
+            <TextField name="confirmPassword" label="Confirmar nova senha" type="password" autoComplete="new-password" />
+          </Stack>
+          <Stack direction="row" justifyContent="flex-end">
+            <Button type="submit" variant="contained" disabled={pending}>
+              {pending ? 'Salvando…' : 'Salvar perfil'}
+            </Button>
+          </Stack>
+        </Stack>
+      </Paper>
     </>
   );
 }

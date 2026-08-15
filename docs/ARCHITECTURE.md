@@ -20,6 +20,10 @@ adapters (HTTP, Prisma, bcrypt, JWT) → application (use cases e ports) → dom
 
 O contrato HTTP em [API.md](./API.md) permanece o mesmo; HTTP é apenas o adapter inbound. Prisma continua sendo o único acesso ao PostgreSQL, e valores monetários seguem sendo `Int` em centavos.
 
+## Frontend
+
+O frontend é Next.js App Router com React Query. A UI interativa vem do **MUI** (tema em `frontend/lib/theme.ts`): botões, campos, selects, diálogos, alertas e snackbars não são recriados em CSS. Datas passam por **dayjs** (`frontend/lib/dates.ts`) no formato de exibição `DD/MM/YYYY HH:mm:ss`; o calendário enviado à API continua `YYYY-MM-DD`. A cor saturada só aparece em valores monetários.
+
 As regras operacionais para futuras mudanças estão em [AGENTS.md](../AGENTS.md), com espelhos para Claude e Cursor. A especificação completa da migração está em [PRD-HEXAGONAL.md](./PRD-HEXAGONAL.md).
 
 ## Invariantes

@@ -1,1 +1,1 @@
-Leia e siga `AGENTS.md` como instrução canônica do repositório. Para alterações de backend, aplique também `.cursor/rules/backend-hexagonal.mdc`.
+Leia e siga `AGENTS.md` como instrução canônica do repositório. Para alterações de backend, aplique também `.cursor/rules/backend-hexagonal.mdc`. Para alterações de frontend, aplique `.cursor/rules/frontend.mdc`.

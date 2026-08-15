@@ -1,120 +1,148 @@
 'use client';
+
+import Autocomplete from '@mui/material/Autocomplete';
+import Chip from '@mui/material/Chip';
+import CircularProgress from '@mui/material/CircularProgress';
+import MenuItem from '@mui/material/MenuItem';
+import Paper from '@mui/material/Paper';
+import Stack from '@mui/material/Stack';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
-import { Empty } from '../../../components/Empty';
-import { PeriodFilter } from '../../../components/PeriodFilter';
+import { useMemo, useState } from 'react';
 import { Amount } from '../../../components/Amount';
+import { Empty } from '../../../components/Empty';
+import { PageHeader } from '../../../components/PageHeader';
+import { PeriodFilter } from '../../../components/PeriodFilter';
 import { services } from '../../../lib/api';
-import { currentPeriod, dateLabel } from '../../../lib/format';
 import { useAuth } from '../../../lib/auth';
+import { currentPeriod, formatDateTime } from '../../../lib/dates';
+import { queryKeys } from '../../../lib/query-keys';
+import type { Category } from '../../../lib/types';
 
 export default function ReportsPage() {
   const [period, setPeriod] = useState(currentPeriod);
   const [type, setType] = useState('');
-  const [categories, setCategories] = useState<string[]>([]);
-  const { data: allCategories } = useQuery({ queryKey: ['categories'], queryFn: services.categories });
+  const [categories, setCategories] = useState<Category[]>([]);
+  const { valuesVisible } = useAuth();
+  const { data: allCategories } = useQuery({ queryKey: queryKeys.categories, queryFn: services.categories });
   const params = new URLSearchParams({
     month: String(period.month),
     year: String(period.year),
     ...(type ? { type } : {}),
-    ...(categories.length ? { categoryIds: categories.join(',') } : {}),
+    ...(categories.length ? { categoryIds: categories.map((item) => item.id).join(',') } : {}),
   });
-  const { data, isLoading } = useQuery({ queryKey: ['report', params.toString()], queryFn: () => services.transactions(params) });
-  const { valuesVisible } = useAuth();
-  const totalIncome = data?.transactions.filter((item) => item.type === 'INCOME').reduce((sum, item) => sum + item.amount, 0) ?? 0;
-  const totalExpense = data?.transactions.filter((item) => item.type === 'EXPENSE').reduce((sum, item) => sum + item.amount, 0) ?? 0;
+  const { data, isLoading } = useQuery({
+    queryKey: queryKeys.report(params.toString()),
+    queryFn: () => services.transactions(params),
+  });
+
+  const { totalIncome, totalExpense } = useMemo(() => {
+    const items = data?.transactions ?? [];
+    return {
+      totalIncome: items.filter((item) => item.type === 'INCOME').reduce((sum, item) => sum + item.amount, 0),
+      totalExpense: items.filter((item) => item.type === 'EXPENSE').reduce((sum, item) => sum + item.amount, 0),
+    };
+  }, [data]);
 
   return (
     <>
-      <div className="page-heading">
-        <div>
-          <span className="eyebrow">Análise</span>
-          <h1>Relatório geral</h1>
-          <p>Analise os lançamentos por período, categoria e tipo.</p>
-        </div>
-      </div>
-      <div className="filters">
-        <PeriodFilter {...period} onChange={setPeriod} />
-        <div className="field">
-          <label htmlFor="categories">Categorias</label>
-          <select
-            id="categories"
+      <PageHeader eyebrow="Análise" title="Relatório geral" description="Analise os lançamentos por período, categoria e tipo." />
+      <Paper sx={{ p: 2.25, mb: 2.25, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
+        <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems={{ md: 'flex-end' }}>
+          <PeriodFilter {...period} onChange={setPeriod} />
+          <Autocomplete
             multiple
+            options={allCategories ?? []}
+            getOptionLabel={(option) => option.name}
+            isOptionEqualToValue={(option, value) => option.id === value.id}
             value={categories}
-            onChange={(event) => setCategories(Array.from(event.target.selectedOptions, (option) => option.value))}
-          >
-            {allCategories?.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="field">
-          <label htmlFor="report-type">Tipo</label>
-          <select id="report-type" value={type} onChange={(event) => setType(event.target.value)}>
-            <option value="">Todos</option>
-            <option value="INCOME">Entradas</option>
-            <option value="EXPENSE">Despesas</option>
-          </select>
-        </div>
-      </div>
-      <div className="cards" style={{ marginBottom: 18 }}>
-        <article className="card">
-          <span className="card-label">Entradas filtradas</span>
-          <div className="card-value positive">
-            <Amount cents={totalIncome} visible={valuesVisible} />
-          </div>
-        </article>
-        <article className="card">
-          <span className="card-label">Despesas filtradas</span>
-          <div className="card-value negative">
-            <Amount cents={totalExpense} visible={valuesVisible} />
-          </div>
-        </article>
-        <article className="card">
-          <span className="card-label">Resultado filtrado</span>
-          <div className={`card-value ${totalIncome - totalExpense >= 0 ? 'positive' : 'negative'}`}>
-            <Amount cents={totalIncome - totalExpense} visible={valuesVisible} />
-          </div>
-        </article>
-      </div>
-      <section className="panel table-panel">
+            onChange={(_, value) => setCategories(value)}
+            sx={{ minWidth: 260, flex: 1 }}
+            renderInput={(params) => <TextField {...params} label="Categorias" />}
+          />
+          <TextField select label="Tipo" value={type} onChange={(event) => setType(event.target.value)} sx={{ minWidth: 180 }}>
+            <MenuItem value="">Todos</MenuItem>
+            <MenuItem value="INCOME">Entradas</MenuItem>
+            <MenuItem value="EXPENSE">Despesas</MenuItem>
+          </TextField>
+        </Stack>
+      </Paper>
+      <BoxCards totalIncome={totalIncome} totalExpense={totalExpense} visible={valuesVisible} />
+      <Paper sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, overflow: 'auto' }}>
         {isLoading ? (
-          <div className="loading">Gerando relatório…</div>
+          <Stack alignItems="center" sx={{ py: 8, gap: 2 }}>
+            <CircularProgress size={28} />
+            <Typography variant="caption">Gerando relatório…</Typography>
+          </Stack>
         ) : !data?.transactions.length ? (
           <Empty />
         ) : (
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Data</th>
-                <th>Lançamento</th>
-                <th>Categoria</th>
-                <th>Tipo</th>
-                <th style={{ textAlign: 'right' }}>Valor</th>
-              </tr>
-            </thead>
-            <tbody>
+          <Table sx={{ minWidth: 660 }}>
+            <TableHead>
+              <TableRow>
+                <TableCell>Data</TableCell>
+                <TableCell>Lançamento</TableCell>
+                <TableCell>Categoria</TableCell>
+                <TableCell>Tipo</TableCell>
+                <TableCell align="right">Valor</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
               {data.transactions.map((item) => (
-                <tr key={item.id}>
-                  <td>{dateLabel(item.date)}</td>
-                  <td>{item.name}</td>
-                  <td>{item.category.name}</td>
-                  <td>
-                    <span className={`badge ${item.type === 'INCOME' ? 'income' : 'expense'}`}>
-                      {item.type === 'INCOME' ? 'Entrada' : 'Despesa'}
-                    </span>
-                  </td>
-                  <td className="amount">
+                <TableRow key={item.id} hover>
+                  <TableCell>{formatDateTime(item.date)}</TableCell>
+                  <TableCell>{item.name}</TableCell>
+                  <TableCell>{item.category.name}</TableCell>
+                  <TableCell>
+                    <Chip size="small" color={item.type === 'INCOME' ? 'success' : 'error'} label={item.type === 'INCOME' ? 'Entrada' : 'Despesa'} />
+                  </TableCell>
+                  <TableCell align="right">
                     <Amount cents={item.amount} visible={valuesVisible} tone={item.type === 'INCOME' ? 'income' : 'expense'} />
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         )}
-      </section>
+      </Paper>
     </>
+  );
+}
+
+function BoxCards({
+  totalIncome,
+  totalExpense,
+  visible,
+}: {
+  totalIncome: number;
+  totalExpense: number;
+  visible: boolean;
+}) {
+  const result = totalIncome - totalExpense;
+  const cards = [
+    { label: 'Entradas filtradas', cents: totalIncome, tone: 'income' as const },
+    { label: 'Despesas filtradas', cents: totalExpense, tone: 'expense' as const },
+    { label: 'Resultado filtrado', cents: result, tone: 'auto' as const },
+  ];
+
+  return (
+    <Stack
+      direction={{ xs: 'column', md: 'row' }}
+      spacing={2}
+      sx={{ mb: 2.25 }}
+    >
+      {cards.map((card) => (
+        <Paper key={card.label} sx={{ flex: 1, minHeight: 120, p: 2.75, border: '1px solid', borderColor: 'divider', borderRadius: 2, display: 'flex', flexDirection: 'column' }}>
+          <Typography variant="overline">{card.label}</Typography>
+          <Amount cents={card.cents} visible={visible} tone={card.tone} sx={{ mt: 'auto', pt: 2, fontSize: 28 }} />
+        </Paper>
+      ))}
+    </Stack>
   );
 }

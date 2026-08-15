@@ -1,7 +1,23 @@
 # Instruções do repositório
 
-- `frontend/` é Next.js; preserve o contrato de `docs/API.md` ao consumir a API.
+- `frontend/` é Next.js; preserve o contrato de `docs/API.md` ao consumir a API. Siga também `.cursor/rules/frontend.mdc`.
 - `backend/` usa Arquitetura Hexagonal. Leia estas regras antes de mudar qualquer arquivo do backend.
+
+## Frontend (Next.js)
+
+```
+frontend/
+  app/                 # App Router — páginas e providers
+  components/          # UI do produto (shell, forms, Amount)
+  lib/                 # api, auth, theme, dates, query-keys
+```
+
+- Componentes interativos vêm do **MUI** (Button, TextField, Select, Dialog, Alert, Snackbar, Chip, Table, Autocomplete, DatePicker). Não recriar esses padrões em CSS.
+- Importar MUI pelo caminho direto (`@mui/material/Button`, `@mui/icons-material/HomeOutlined`).
+- Datas com **dayjs** via `lib/dates.ts`: exibir `DD/MM/YYYY HH:mm:ss`; enviar calendário à API como `YYYY-MM-DD`.
+- Tese visual: cor saturada só em valores monetários (`Amount`); primary é tinta, não azul.
+- Chart.js só por `next/dynamic` (`ssr: false`). Server state com React Query e `queryKeys`.
+- `'use client'` no menor subtree possível. Feedback de sucesso/erro: Snackbar (`useFeedback`) e Alert inline.
 
 ## Backend hexagonal
 

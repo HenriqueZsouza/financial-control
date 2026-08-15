@@ -8,6 +8,7 @@ const display = Space_Grotesk({ subsets: ['latin'], variable: '--font-display', 
 const mono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono', display: 'swap' });
 
 export const metadata: Metadata = { title: 'Financial Control', description: 'Controle financeiro familiar' };
+
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="pt-BR" className={`${body.variable} ${display.variable} ${mono.variable}`}>
