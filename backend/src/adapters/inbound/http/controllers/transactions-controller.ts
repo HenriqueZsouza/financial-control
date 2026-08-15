@@ -12,7 +12,8 @@ export class TransactionsController {
   } catch (error) { next(error); } };
   list = async (req: Request, res: Response, next: NextFunction) => { try {
     const query = listTransactionsSchema.parse(req.query);
-    res.json({ transactions: await this.listTransactions.execute(req.userId!, { ...(query.month ? { period: periodOf(query.month, query.year!) } : {}), categoryIds: categoryIds(query.categoryIds), ...(query.type ? { type: query.type } : {}) }) });
+    const transactions = await this.listTransactions.execute(req.userId!, { ...(query.month ? { period: periodOf(query.month, query.year!) } : {}), categoryIds: categoryIds(query.categoryIds), ...(query.type ? { type: query.type } : {}), ...(query.scope ? { scope: query.scope } : {}) });
+    res.json({ transactions: query.scope === 'family' ? transactions.map(({ user, ...transaction }: any) => ({ ...transaction, member: user })) : transactions });
   } catch (error) { next(error); } };
   getById = async (req: Request, res: Response, next: NextFunction) => { try { res.json({ transaction: await this.getTransaction.execute(req.userId!, idParamSchema.parse(req.params.id)) }); } catch (error) { next(error); } };
   update = async (req: Request, res: Response, next: NextFunction) => { try {

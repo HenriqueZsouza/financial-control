@@ -1,0 +1,2 @@
+import type { AppNotification, NotificationType } from '../../../domain/family/family.js';
+export interface NotificationRepository { create(data: { userId: number; type: NotificationType; title: string; body: string; payload?: unknown }): Promise<void>; list(userId: number, unreadOnly?: boolean): Promise<AppNotification[]>; markRead(userId: number, id: number, now: Date): Promise<boolean>; markAllRead(userId: number, now: Date): Promise<void>; }

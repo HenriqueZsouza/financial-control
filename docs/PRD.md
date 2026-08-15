@@ -124,7 +124,7 @@ financial-control/
 
 - Bot Telegram / Hermes Agent
 - Deploy em produção
-- Multi-usuário familiar compartilhado (conta conjunta)
+- Multi-usuário familiar compartilhado (conta conjunta) — spec em [`PRD-FAMILY-GROUP.md`](./PRD-FAMILY-GROUP.md)
 - Cartão de crédito completo (apenas placeholder de rota)
 - Contas a pagar completo (apenas placeholder de rota)
 - OAuth social, 2FA, notificações push
@@ -380,7 +380,7 @@ Documentos globais adicionais:
 | v1 | Web + API rodando **localmente** (este PRD) |
 | v2 | Integração Telegram via Hermes Agent |
 | v3 | Deploy produção, HTTPS, backups, monitoramento |
-| v4 | Conta familiar compartilhada, cartão de crédito, contas a pagar completos |
+| v4 | Grupo familiar (convites + relatório consolidado) — [`PRD-FAMILY-GROUP.md`](./PRD-FAMILY-GROUP.md); cartão de crédito e contas a pagar completos |
 
 ---
 

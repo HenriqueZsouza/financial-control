@@ -28,6 +28,7 @@ import type { Category } from '../../../lib/types';
 export default function ReportsPage() {
   const [period, setPeriod] = useState(currentPeriod);
   const [type, setType] = useState('');
+  const [scope, setScope] = useState<'personal' | 'family'>('personal');
   const [categories, setCategories] = useState<Category[]>([]);
   const { valuesVisible } = useAuth();
   const { data: allCategories } = useQuery({ queryKey: queryKeys.categories, queryFn: services.categories });
@@ -36,6 +37,7 @@ export default function ReportsPage() {
     year: String(period.year),
     ...(type ? { type } : {}),
     ...(categories.length ? { categoryIds: categories.map((item) => item.id).join(',') } : {}),
+    scope,
   });
   const { data, isLoading } = useQuery({
     queryKey: queryKeys.report(params.toString()),
@@ -71,6 +73,10 @@ export default function ReportsPage() {
             <MenuItem value="INCOME">Entradas</MenuItem>
             <MenuItem value="EXPENSE">Despesas</MenuItem>
           </TextField>
+          <TextField select label="Escopo" value={scope} onChange={(event) => setScope(event.target.value as 'personal' | 'family')} sx={{ minWidth: 180 }}>
+            <MenuItem value="personal">Individual</MenuItem>
+            <MenuItem value="family">Grupo familiar</MenuItem>
+          </TextField>
         </Stack>
       </Paper>
       <BoxCards totalIncome={totalIncome} totalExpense={totalExpense} visible={valuesVisible} />
@@ -90,6 +96,7 @@ export default function ReportsPage() {
                 <TableCell>Lançamento</TableCell>
                 <TableCell>Categoria</TableCell>
                 <TableCell>Tipo</TableCell>
+                {scope === 'family' ? <TableCell>Membro</TableCell> : null}
                 <TableCell align="right">Valor</TableCell>
               </TableRow>
             </TableHead>
@@ -102,6 +109,7 @@ export default function ReportsPage() {
                   <TableCell>
                     <Chip size="small" color={item.type === 'INCOME' ? 'success' : 'error'} label={item.type === 'INCOME' ? 'Entrada' : 'Despesa'} />
                   </TableCell>
+                  {scope === 'family' ? <TableCell>{item.member ? `${item.member.firstName} ${item.member.lastName}` : '—'}</TableCell> : null}
                   <TableCell align="right">
                     <Amount cents={item.amount} visible={valuesVisible} tone={item.type === 'INCOME' ? 'income' : 'expense'} />
                   </TableCell>

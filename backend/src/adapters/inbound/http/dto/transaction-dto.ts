@@ -13,7 +13,7 @@ export const createTransactionSchema = fields.superRefine((data, context) => {
 });
 export const updateTransactionSchema = fields.partial().omit({ installmentsCount: true });
 export const listTransactionsSchema = z.object({
-  month: z.coerce.number().int().min(1).max(12).optional(), year: z.coerce.number().int().min(2000).max(9999).optional(), type: z.enum(['INCOME', 'EXPENSE']).optional(), categoryIds: z.union([z.string(), z.array(z.string())]).optional(),
+  month: z.coerce.number().int().min(1).max(12).optional(), year: z.coerce.number().int().min(2000).max(9999).optional(), type: z.enum(['INCOME', 'EXPENSE']).optional(), categoryIds: z.union([z.string(), z.array(z.string())]).optional(), scope: z.enum(['personal', 'family']).optional(),
 }).refine((data) => (data.month === undefined) === (data.year === undefined), { message: 'Mês e ano devem formar um período válido.', path: ['month'] });
 export const dashboardSchema = z.object({ month: z.coerce.number().int().min(1).max(12).optional(), year: z.coerce.number().int().min(2000).max(9999).optional() })
   .refine((data) => (data.month === undefined) === (data.year === undefined), { message: 'Mês e ano devem formar um período válido.', path: ['month'] });

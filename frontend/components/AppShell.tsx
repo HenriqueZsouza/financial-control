@@ -1,6 +1,9 @@
 'use client';
 
 import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined';
+import FamilyRestroomOutlinedIcon from '@mui/icons-material/FamilyRestroomOutlined';
+import NotificationsOutlinedIcon from '@mui/icons-material/NotificationsOutlined';
+import Badge from '@mui/material/Badge';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import CreditCardOutlinedIcon from '@mui/icons-material/CreditCardOutlined';
 import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
@@ -32,6 +35,9 @@ import NextLink from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useAuth } from '../lib/auth';
+import { useQuery } from '@tanstack/react-query';
+import { services } from '../lib/api';
+import { queryKeys } from '../lib/query-keys';
 import { tokens } from '../lib/theme';
 
 const DRAWER_WIDTH = 264;
@@ -49,6 +55,7 @@ const groups: {
         { href: '/relatorios', label: 'Relatório geral', icon: AssessmentOutlinedIcon },
       ],
     },
+    { label: 'Conta', links: [{ href: '/familia', label: 'Família', icon: FamilyRestroomOutlinedIcon }] },
     {
       label: 'Em breve',
       links: [
@@ -65,6 +72,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'), { noSsr: true });
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { data: notificationData } = useQuery({ queryKey: queryKeys.notifications, queryFn: services.notifications, staleTime: 30_000, refetchOnWindowFocus: true, enabled: Boolean(user) });
+  const { data: pendingInvites } = useQuery({ queryKey: queryKeys.familyInvites, queryFn: services.receivedInvites, staleTime: 30_000, refetchOnWindowFocus: true, enabled: Boolean(user) });
+  const pendingInviteCount = pendingInvites?.invites.length ?? 0;
 
   useEffect(() => {
     if (!loading && !user) router.replace('/login');
@@ -127,7 +137,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   }}
                 >
                   <ListItemIcon sx={{ minWidth: 36, color: selected ? '#fff' : 'text.secondary' }}>
-                    <Icon fontSize="small" />
+                    {link.href === '/familia' && pendingInviteCount > 0 ? (
+                      <Badge badgeContent={pendingInviteCount} color="error" max={99}>
+                        <Icon fontSize="small" />
+                      </Badge>
+                    ) : (
+                      <Icon fontSize="small" />
+                    )}
                   </ListItemIcon>
                   <ListItemText primary={link.label} primaryTypographyProps={{ fontSize: 14, fontWeight: 500 }} />
                 </ListItemButton>
@@ -181,6 +197,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 {valuesVisible ? <VisibilityOutlinedIcon /> : <VisibilityOffOutlinedIcon />}
               </IconButton>
             </Tooltip>
+            <Tooltip title="Notificações"><IconButton component={NextLink} href="/notificacoes" aria-label="Notificações"><Badge badgeContent={notificationData?.notifications.unreadCount ?? 0} color="error"><NotificationsOutlinedIcon /></Badge></IconButton></Tooltip>
             <Divider orientation="vertical" flexItem sx={{ mx: 1, my: 1.5 }} />
             <Avatar sx={{ width: 36, height: 36, bgcolor: tokens.ink, fontSize: 12, fontFamily: 'var(--font-display), "Space Grotesk", sans-serif' }}>
               {initials}

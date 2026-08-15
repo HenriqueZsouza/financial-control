@@ -1,4 +1,4 @@
-import type { Category, Summary, Transaction, User } from './types';
+import type { AppNotification, Category, FamilyGroup, FamilyInvite, Summary, Transaction, User } from './types';
 
 const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3333';
 export class ApiError extends Error { constructor(public code: string, message: string, public details?: unknown) { super(message); } }
@@ -24,4 +24,15 @@ export const services = {
   updateTransaction: (id: number | string, data: Record<string, unknown>) => api<{ transaction: Transaction }>(`/api/transactions/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   deleteTransaction: (id: number | string) => api<void>(`/api/transactions/${id}`, { method: 'DELETE' }),
   updateProfile: (data: Record<string, string>) => api<{ user: User }>('/api/users/me', { method: 'PATCH', body: JSON.stringify(data) }),
+  family: () => api<{ group: FamilyGroup | null }>('/api/family'),
+  inviteFamily: (email: string) => api<{ invite: FamilyInvite }>('/api/family/invites', { method: 'POST', body: JSON.stringify({ email }) }),
+  receivedInvites: () => api<{ invites: FamilyInvite[] }>('/api/family/invites/received'),
+  acceptInvite: (id: number) => api<{ group: FamilyGroup }>(`/api/family/invites/${id}/accept`, { method: 'POST' }),
+  declineInvite: (id: number) => api<void>(`/api/family/invites/${id}/decline`, { method: 'POST' }),
+  removeFamilyMember: (userId: number) => api<void>(`/api/family/members/${userId}`, { method: 'DELETE' }),
+  leaveFamily: () => api<void>('/api/family/leave', { method: 'POST' }),
+  dissolveFamily: () => api<void>('/api/family/dissolve', { method: 'POST' }),
+  notifications: () => api<{ notifications: { items: AppNotification[]; unreadCount: number } }>('/api/notifications'),
+  readNotification: (id: number) => api<void>(`/api/notifications/${id}/read`, { method: 'POST' }),
+  readAllNotifications: () => api<void>('/api/notifications/read-all', { method: 'POST' }),
 };

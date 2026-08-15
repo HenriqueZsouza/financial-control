@@ -19,6 +19,7 @@ export interface Transaction {
   updatedAt: Date;
   deletedAt: Date | null;
   category?: import('../category/category.js').Category;
+  member?: { id: number; firstName: string; lastName: string };
 }
 
 export interface InstallmentDraft { amount: number; installmentNumber: number; date: Date }

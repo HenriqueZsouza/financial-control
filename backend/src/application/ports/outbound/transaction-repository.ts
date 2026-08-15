@@ -5,7 +5,7 @@ export interface CreateTransactionData {
   userId: number; categoryId: number; type: TransactionType; name: string; amount: number; paymentType: PaymentType;
   installmentsCount: number | null; installmentGroupId: number | null; installmentNumber: number | null; date: Date;
 }
-export interface TransactionFilters { period?: Period; categoryIds?: number[]; type?: TransactionType }
+export interface TransactionFilters { period?: Period; categoryIds?: number[]; type?: TransactionType; userIds?: number[] }
 export interface UpdateTransactionData { type?: TransactionType; name?: string; amount?: number; categoryId?: number; paymentType?: PaymentType; date?: Date }
 export interface CategoryTotal { categoryId: number; name: string; total: number }
 export interface TransactionRepository {

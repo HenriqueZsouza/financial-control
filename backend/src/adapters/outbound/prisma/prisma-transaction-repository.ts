@@ -21,8 +21,8 @@ export class PrismaTransactionRepository implements TransactionRepository {
   }
   list(userId: number, filters: TransactionFilters): Promise<Transaction[]> {
     return prisma.transaction.findMany({
-      where: { userId, deletedAt: null, ...(filters.period ? { date: { gte: filters.period.start, lt: filters.period.end } } : {}), ...(filters.categoryIds?.length ? { categoryId: { in: filters.categoryIds } } : {}), ...(filters.type ? { type: toPrismaType(filters.type) } : {}) },
-      include: { category: true }, orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
+      where: { ...(filters.userIds ? { userId: { in: filters.userIds } } : { userId }), deletedAt: null, ...(filters.period ? { date: { gte: filters.period.start, lt: filters.period.end } } : {}), ...(filters.categoryIds?.length ? { categoryId: { in: filters.categoryIds } } : {}), ...(filters.type ? { type: toPrismaType(filters.type) } : {}) },
+      include: { category: true, ...(filters.userIds ? { user: { select: { id: true, firstName: true, lastName: true } } } : {}) }, orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
     });
   }
   findActiveById(userId: number, id: number): Promise<Transaction | null> { return prisma.transaction.findFirst({ where: { id, userId, deletedAt: null }, include: { category: true } }); }
