@@ -22,4 +22,6 @@ Exemplo de criação à vista:
 { "type": "EXPENSE", "name": "Mercado", "amount": 15000, "categoryId": 1, "paymentType": "CASH", "date": "2026-08-12" }
 ```
 
+Para crédito à vista (1x), use `paymentType: "CREDIT_1X"` — um único lançamento, sem grupo de parcelas.
+
 Para parcelar, envie `paymentType: "INSTALLMENT"` e `installmentsCount`. A API distribui as parcelas mensalmente.

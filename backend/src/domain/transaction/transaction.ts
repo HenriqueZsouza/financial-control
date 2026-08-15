@@ -1,5 +1,7 @@
 export type TransactionType = 'INCOME' | 'EXPENSE';
-export type PaymentType = 'CASH' | 'INSTALLMENT';
+export type PaymentType = 'CASH' | 'CREDIT_1X' | 'INSTALLMENT';
+
+export const isSinglePayment = (paymentType: PaymentType) => paymentType === 'CASH' || paymentType === 'CREDIT_1X';
 
 export interface Transaction {
   id: number;

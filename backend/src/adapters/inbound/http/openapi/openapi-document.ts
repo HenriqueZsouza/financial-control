@@ -46,9 +46,10 @@ export const openApiDocument = {
       },
       post: {
         tags: ['Transactions'], summary: 'Cria um ou mais lançamentos', security: bearerSecurity,
-        description: '`amount` é inteiro em centavos. `INSTALLMENT` exige `installmentsCount` entre 2 e 120; o parcelamento cria várias linhas no mesmo grupo, distribuindo o resto na última parcela.',
+        description: '`amount` é inteiro em centavos. `CASH` e `CREDIT_1X` criam um único lançamento. `INSTALLMENT` exige `installmentsCount` entre 2 e 120; o parcelamento cria várias linhas no mesmo grupo, distribuindo o resto na última parcela.',
         requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/CreateTransactionRequest' }, examples: {
           cash: { summary: 'Compra à vista', value: { type: 'EXPENSE', name: 'Mercado', amount: 15000, categoryId: 1, paymentType: 'CASH', date: '2026-08-12' } },
+          credit1x: { summary: 'Crédito à vista (1x)', value: { type: 'EXPENSE', name: 'Restaurante', amount: 8500, categoryId: 1, paymentType: 'CREDIT_1X', date: '2026-08-12' } },
           installment: { summary: 'Compra parcelada', value: { type: 'EXPENSE', name: 'Notebook', amount: 360000, categoryId: 1, paymentType: 'INSTALLMENT', installmentsCount: 12, date: '2026-08-12' } },
         } } } },
         responses: { '201': { description: 'Lançamento(s) criado(s)', ...json('TransactionsResponse') }, '400': error('Categoria inválida.', 'INVALID_CATEGORY'), '401': error('Token ausente ou inválido.', 'UNAUTHENTICATED'), '500': error('Ocorreu um erro inesperado.', 'INTERNAL_ERROR') },

@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { FormEvent, useState } from 'react';
+import { ChangeEvent, FormEvent, useState } from 'react';
 import { z } from 'zod';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -13,6 +13,7 @@ import Typography from '@mui/material/Typography';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { ApiError, services } from '../lib/api';
 import { DATE_FORMAT, parseApiDate, toApiDate } from '../lib/dates';
+import { centsToCurrencyInput, currencyInputToCents, formatCurrencyInput } from '../lib/format';
 import { useFeedback } from '../lib/feedback';
 import { queryKeys } from '../lib/query-keys';
 import type { PaymentType, Transaction } from '../lib/types';
@@ -23,25 +24,24 @@ const schema = z.object({
   name: z.string().min(1, 'Informe um nome.'),
   amount: z.string().min(1, 'Informe o valor.'),
   categoryId: z.string().min(1, 'Escolha uma categoria.'),
-  paymentType: z.enum(['CASH', 'INSTALLMENT']),
+  paymentType: z.enum(['CASH', 'CREDIT_1X', 'INSTALLMENT']),
   installmentsCount: z.string().optional(),
 });
 
 const INSTALLMENT_OPTIONS = Array.from({ length: 23 }, (_, index) => index + 2);
-
-const toCents = (value: string) => {
-  const clean = value.trim().replace(/R\$\s?/g, '').replace(/\./g, '').replace(',', '.');
-  return Math.round(Number(clean) * 100);
-};
-const fromCents = (cents: number) => (cents / 100).toFixed(2).replace('.', ',');
 
 export function TransactionForm({ initial, onSaved }: { initial?: Transaction; onSaved: () => void }) {
   const { data: categories, isLoading } = useQuery({ queryKey: queryKeys.categories, queryFn: services.categories });
   const { notify } = useFeedback();
   const [payment, setPayment] = useState<PaymentType>(initial?.paymentType ?? 'CASH');
   const [date, setDate] = useState(() => parseApiDate(initial?.date));
+  const [amount, setAmount] = useState(() => (initial ? centsToCurrencyInput(initial.amount) : ''));
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+
+  function handleAmountChange(event: ChangeEvent<HTMLInputElement>) {
+    setAmount(formatCurrencyInput(event.target.value));
+  }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -50,13 +50,13 @@ export function TransactionForm({ initial, onSaved }: { initial?: Transaction; o
     const checked = schema.safeParse(raw);
     if (!checked.success) return setError(checked.error.issues[0].message);
     if (!date?.isValid()) return setError('Informe uma data.');
-    const amount = toCents(checked.data.amount);
-    if (!Number.isInteger(amount) || amount <= 0) return setError('Informe um valor monetário válido.');
+    const amountCents = currencyInputToCents(checked.data.amount);
+    if (!Number.isInteger(amountCents) || amountCents <= 0) return setError('Informe um valor monetário válido.');
     const { installmentsCount, categoryId, ...base } = checked.data;
     const body: Record<string, unknown> = {
       ...base,
       categoryId: Number(categoryId),
-      amount,
+      amount: amountCents,
       date: toApiDate(date),
       ...(base.paymentType === 'INSTALLMENT' ? { installmentsCount: Number(installmentsCount) } : {}),
     };
@@ -113,7 +113,15 @@ export function TransactionForm({ initial, onSaved }: { initial?: Transaction; o
         </Stack>
         <TextField name="name" label="Nome do lançamento" defaultValue={initial?.name} placeholder="Ex.: Compra de mercado" />
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-          <TextField name="amount" label="Valor total (R$)" inputMode="decimal" defaultValue={initial ? fromCents(initial.amount) : ''} placeholder="0,00" />
+          <TextField
+            name="amount"
+            label="Valor total (R$)"
+            value={amount}
+            onChange={handleAmountChange}
+            inputMode="numeric"
+            placeholder="0,00"
+            inputProps={{ autoComplete: 'off' }}
+          />
           <TextField select name="categoryId" label="Categoria" defaultValue={initial ? String(initial.categoryId) : ''}>
             <MenuItem value="">Selecione</MenuItem>
             {categories?.map((category) => (
@@ -134,6 +142,7 @@ export function TransactionForm({ initial, onSaved }: { initial?: Transaction; o
             onChange={(event) => setPayment(event.target.value as PaymentType)}
           >
             <MenuItem value="CASH">À vista</MenuItem>
+            <MenuItem value="CREDIT_1X">Crédito à vista (1x)</MenuItem>
             <MenuItem value="INSTALLMENT">Parcelado</MenuItem>
           </TextField>
           {!initial && payment === 'INSTALLMENT' ? (

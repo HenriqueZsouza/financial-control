@@ -40,23 +40,23 @@ const groups: {
   label: string;
   links: { href: string; label: string; icon: typeof HomeOutlinedIcon }[];
 }[] = [
-  { label: 'Visão', links: [{ href: '/', label: 'Início', icon: HomeOutlinedIcon }] },
-  {
-    label: 'Movimentações',
-    links: [
-      { href: '/lancamentos/novo', label: 'Cadastrar lançamento', icon: AddCircleOutlineIcon },
-      { href: '/lancamentos', label: 'Lançamentos', icon: ReceiptLongOutlinedIcon },
-      { href: '/relatorios', label: 'Relatório geral', icon: AssessmentOutlinedIcon },
-    ],
-  },
-  {
-    label: 'Em breve',
-    links: [
-      { href: '/cartao-credito', label: 'Cartão de crédito', icon: CreditCardOutlinedIcon },
-      { href: '/contas-a-pagar', label: 'Contas a pagar', icon: ScheduleOutlinedIcon },
-    ],
-  },
-];
+    { label: 'Visão', links: [{ href: '/', label: 'Início', icon: HomeOutlinedIcon }] },
+    {
+      label: 'Movimentações',
+      links: [
+        { href: '/lancamentos/novo', label: 'Cadastrar lançamento', icon: AddCircleOutlineIcon },
+        { href: '/lancamentos', label: 'Lançamentos', icon: ReceiptLongOutlinedIcon },
+        { href: '/relatorios', label: 'Relatório geral', icon: AssessmentOutlinedIcon },
+      ],
+    },
+    {
+      label: 'Em breve',
+      links: [
+        { href: '/cartao-credito', label: 'Cartão de crédito', icon: CreditCardOutlinedIcon },
+        { href: '/contas-a-pagar', label: 'Contas a pagar', icon: ScheduleOutlinedIcon },
+      ],
+    },
+  ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { user, loading, logout, valuesVisible, setValuesVisible } = useAuth();
@@ -136,9 +136,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </List>
         ))}
       </Box>
-      <Typography variant="caption" sx={{ p: 1.5, bgcolor: tokens.surface2, border: '1px solid', borderColor: 'divider', borderRadius: 1, color: 'text.secondary' }}>
-        Os valores ficam ocultos por padrão a cada sessão. Use o olho para revelá-los.
-      </Typography>
     </Stack>
   );
 

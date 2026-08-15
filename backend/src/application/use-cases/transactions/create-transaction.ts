@@ -1,6 +1,6 @@
 import { DomainError } from '../../../domain/shared/errors.js';
 import { todayUtc } from '../../../domain/shared/period.js';
-import { splitInstallments } from '../../../domain/transaction/transaction.js';
+import { isSinglePayment, splitInstallments } from '../../../domain/transaction/transaction.js';
 import type { CreateTransaction, CreateTransactionInput } from '../../ports/inbound/transactions.js';
 import type { CategoryRepository } from '../../ports/outbound/category-repository.js';
 import type { Clock, IdGenerator } from '../../ports/outbound/security.js';
@@ -11,7 +11,7 @@ export class CreateTransactionUseCase implements CreateTransaction {
   async execute(userId: number, input: CreateTransactionInput) {
     if (!(await this.categories.exists(input.categoryId))) throw new DomainError('INVALID_CATEGORY', 'A categoria informada não existe.');
     const date = input.date ?? todayUtc(this.clock.now());
-    if (input.paymentType === 'CASH') {
+    if (isSinglePayment(input.paymentType)) {
       return [await this.transactions.create({ ...input, userId, date, installmentsCount: null, installmentGroupId: null, installmentNumber: null })];
     }
     const count = input.installmentsCount!;

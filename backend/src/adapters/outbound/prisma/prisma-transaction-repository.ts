@@ -1,10 +1,16 @@
-import { PaymentType, TransactionType } from '@prisma/client';
+import { PaymentType as PrismaPaymentType, TransactionType } from '@prisma/client';
 import type { TransactionRepository, CreateTransactionData, TransactionFilters, UpdateTransactionData } from '../../../application/ports/outbound/transaction-repository.js';
-import type { Transaction } from '../../../domain/transaction/transaction.js';
+import type { PaymentType, Transaction } from '../../../domain/transaction/transaction.js';
 import { prisma } from './prisma-client.js';
 
 const toPrismaType = (type: 'INCOME' | 'EXPENSE') => type === 'INCOME' ? TransactionType.INCOME : TransactionType.EXPENSE;
-const toPrismaPayment = (payment: 'CASH' | 'INSTALLMENT') => payment === 'CASH' ? PaymentType.CASH : PaymentType.INSTALLMENT;
+const toPrismaPayment = (payment: PaymentType): PrismaPaymentType => {
+  switch (payment) {
+    case 'CASH': return PrismaPaymentType.CASH;
+    case 'CREDIT_1X': return PrismaPaymentType.CREDIT_1X;
+    case 'INSTALLMENT': return PrismaPaymentType.INSTALLMENT;
+  }
+};
 const mapCreate = (data: CreateTransactionData) => ({ ...data, type: toPrismaType(data.type), paymentType: toPrismaPayment(data.paymentType) });
 const mapUpdate = (data: UpdateTransactionData) => ({ ...data, ...(data.type ? { type: toPrismaType(data.type) } : {}), ...(data.paymentType ? { paymentType: toPrismaPayment(data.paymentType) } : {}) });
 

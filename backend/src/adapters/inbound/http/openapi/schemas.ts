@@ -66,7 +66,7 @@ export const openApiSchemas = {
     },
   },
   TransactionType: { type: 'string', enum: ['INCOME', 'EXPENSE'] },
-  PaymentType: { type: 'string', enum: ['CASH', 'INSTALLMENT'] },
+  PaymentType: { type: 'string', enum: ['CASH', 'CREDIT_1X', 'INSTALLMENT'] },
   Transaction: {
     type: 'object',
     required: ['id', 'userId', 'categoryId', 'type', 'name', 'amount', 'paymentType', 'date', 'createdAt', 'updatedAt', 'deletedAt'],

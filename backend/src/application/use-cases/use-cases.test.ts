@@ -69,6 +69,11 @@ test('parcelas preservam centavos e meses, e cash gera um lançamento', async ()
   repository.created = [];
   await create.execute(1, { type: 'INCOME', name: 'Salário', amount: 1000, categoryId: 1, paymentType: 'CASH' });
   assert.equal(repository.created[0].installmentsCount, null);
+  repository.created = [];
+  const credit = await create.execute(1, { type: 'EXPENSE', name: 'Restaurante', amount: 8500, categoryId: 1, paymentType: 'CREDIT_1X', date: new Date('2026-02-10T00:00:00Z') });
+  assert.equal(credit.length, 1);
+  assert.equal(credit[0].paymentType, 'CREDIT_1X');
+  assert.equal(credit[0].installmentsCount, null);
   await expectsDomainError(() => create.execute(1, { type: 'INCOME', name: 'X', amount: 1, categoryId: 99, paymentType: 'CASH' }), 'INVALID_CATEGORY');
 });
 

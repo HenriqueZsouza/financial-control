@@ -6,7 +6,7 @@ const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use a data no formato A
 export const idParamSchema = z.coerce.number().int().positive();
 const fields = z.object({
   type: z.enum(['INCOME', 'EXPENSE']), name: z.string().trim().min(1).max(160), amount: z.number().int().positive('O valor deve ser informado em centavos.'), categoryId: z.coerce.number().int().positive(),
-  paymentType: z.enum(['CASH', 'INSTALLMENT']), installmentsCount: z.number().int().min(2).max(120).optional(), date: isoDate.optional(),
+  paymentType: z.enum(['CASH', 'CREDIT_1X', 'INSTALLMENT']), installmentsCount: z.number().int().min(2).max(120).optional(), date: isoDate.optional(),
 });
 export const createTransactionSchema = fields.superRefine((data, context) => {
   if (data.paymentType === 'INSTALLMENT' && !data.installmentsCount) context.addIssue({ code: z.ZodIssueCode.custom, path: ['installmentsCount'], message: 'Informe a quantidade de parcelas.' });
