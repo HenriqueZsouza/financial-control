@@ -7,3 +7,32 @@ alwaysApply: false
 Siga a seção **Backend hexagonal** de `AGENTS.md`.
 
 Checklist: regras no domínio/use case; I/O por port outbound; Prisma somente em `adapters/outbound/prisma`; Express/Zod somente em `adapters/inbound/http`; enums Prisma não vazam ao domínio; wiring somente em `src/main.ts`; preserve `userId`, soft delete, centavos, parcelas, JWT Bearer e `{ code, message, details? }`; cubra use cases com fakes.
+
+## Formatação e legibilidade
+
+- Indentação com **2 espaços**; não misturar tabs.
+- **Um import por linha**; agrupe por origem (Node, libs, ports, adapters, domínio).
+- **Uma instrução por linha** — não comprimir declarações, rotas Express ou handlers em linha única.
+- **Classes e métodos**: corpo do método em bloco com chaves; um handler por linha em controllers.
+- **Objetos e arrays longos**: uma propriedade/elemento por linha quando passar de ~100 caracteres.
+- **Wiring em `main.ts`**: uma instância por linha; controllers com dependências quebradas em linhas separadas.
+
+```ts
+// ❌
+const users = new PrismaUserRepository(); const categories = new PrismaCategoryRepository();
+router.get('/transactions', protectedRoute, controllers.transactions.list); router.post('/transactions', protectedRoute, controllers.transactions.create);
+get = async (req, res, next) => { try { res.json({ group: await this.getFamily.execute(req.userId!) }); } catch (e) { next(e); } };
+
+// ✅
+const users = new PrismaUserRepository();
+const categories = new PrismaCategoryRepository();
+router.get('/transactions', protectedRoute, controllers.transactions.list);
+router.post('/transactions', protectedRoute, controllers.transactions.create);
+get = async (req, res, next) => {
+  try {
+    res.json({ group: await this.getFamily.execute(req.userId!) });
+  } catch (error) {
+    next(error);
+  }
+};
+```

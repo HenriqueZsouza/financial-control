@@ -26,20 +26,65 @@ import { GetTransactionUseCase } from './application/use-cases/transactions/get-
 import { ListTransactionsUseCase } from './application/use-cases/transactions/list-transactions.js';
 import { UpdateTransactionUseCase } from './application/use-cases/transactions/update-transaction.js';
 import { UpdateCurrentUserUseCase } from './application/use-cases/users/update-current-user.js';
-import { AcceptFamilyInviteUseCase, DeclineFamilyInviteUseCase, DissolveFamilyGroupUseCase, GetMyFamilyUseCase, InviteFamilyMemberUseCase, LeaveFamilyGroupUseCase, ListReceivedInvitesUseCase, RemoveFamilyMemberUseCase } from './application/use-cases/family/family-use-cases.js';
-import { ListNotificationsUseCase, MarkAllNotificationsReadUseCase, MarkNotificationReadUseCase } from './application/use-cases/notifications/notification-use-cases.js';
+import {
+  AcceptFamilyInviteUseCase,
+  DeclineFamilyInviteUseCase,
+  DissolveFamilyGroupUseCase,
+  GetMyFamilyUseCase,
+  InviteFamilyMemberUseCase,
+  LeaveFamilyGroupUseCase,
+  ListReceivedInvitesUseCase,
+  RemoveFamilyMemberUseCase,
+} from './application/use-cases/family/family-use-cases.js';
+import {
+  ListNotificationsUseCase,
+  MarkAllNotificationsReadUseCase,
+  MarkNotificationReadUseCase,
+} from './application/use-cases/notifications/notification-use-cases.js';
 import { config } from './config/index.js';
 
-const users = new PrismaUserRepository(); const categories = new PrismaCategoryRepository(); const transactions = new PrismaTransactionRepository();
-const family = new PrismaFamilyRepository(); const notifications = new PrismaNotificationRepository();
-const clock = new SystemClock(); const ids = new PrismaSequenceIdGenerator(); const hasher = new BcryptPasswordHasher(); const tokens = new JwtTokenIssuer(config.jwtSecret, config.jwtExpiresIn);
+const users = new PrismaUserRepository();
+const categories = new PrismaCategoryRepository();
+const transactions = new PrismaTransactionRepository();
+const family = new PrismaFamilyRepository();
+const notifications = new PrismaNotificationRepository();
+const clock = new SystemClock();
+const ids = new PrismaSequenceIdGenerator();
+const hasher = new BcryptPasswordHasher();
+const tokens = new JwtTokenIssuer(config.jwtSecret, config.jwtExpiresIn);
+
 const controllers = {
-  auth: new AuthController(new RegisterUserUseCase(users, hasher), new LoginUserUseCase(users, hasher, tokens), new GetCurrentUserUseCase(users)),
-  users: new UsersController(new UpdateCurrentUserUseCase(users, hasher)), categories: new CategoriesController(new ListCategoriesUseCase(categories)),
-  transactions: new TransactionsController(new CreateTransactionUseCase(transactions, categories, clock, ids), new ListTransactionsUseCase(transactions, family), new GetTransactionUseCase(transactions), new UpdateTransactionUseCase(transactions, categories), new DeleteTransactionUseCase(transactions, clock)),
+  auth: new AuthController(
+    new RegisterUserUseCase(users, hasher),
+    new LoginUserUseCase(users, hasher, tokens),
+    new GetCurrentUserUseCase(users),
+  ),
+  users: new UsersController(new UpdateCurrentUserUseCase(users, hasher)),
+  categories: new CategoriesController(new ListCategoriesUseCase(categories)),
+  transactions: new TransactionsController(
+    new CreateTransactionUseCase(transactions, categories, clock, ids),
+    new ListTransactionsUseCase(transactions, family),
+    new GetTransactionUseCase(transactions),
+    new UpdateTransactionUseCase(transactions, categories),
+    new DeleteTransactionUseCase(transactions, clock),
+  ),
   dashboard: new DashboardController(new GetDashboardSummaryUseCase(transactions, clock)),
-  family: new FamilyController(new GetMyFamilyUseCase(family), new InviteFamilyMemberUseCase(family, users, notifications, clock), new ListReceivedInvitesUseCase(family), new AcceptFamilyInviteUseCase(family, notifications, clock), new DeclineFamilyInviteUseCase(family, notifications, clock), new RemoveFamilyMemberUseCase(family, notifications, clock), new LeaveFamilyGroupUseCase(family, clock), new DissolveFamilyGroupUseCase(family, notifications, clock)),
-  notifications: new NotificationsController(new ListNotificationsUseCase(notifications), new MarkNotificationReadUseCase(notifications, clock), new MarkAllNotificationsReadUseCase(notifications, clock)),
+  family: new FamilyController(
+    new GetMyFamilyUseCase(family),
+    new InviteFamilyMemberUseCase(family, users, notifications, clock),
+    new ListReceivedInvitesUseCase(family),
+    new AcceptFamilyInviteUseCase(family, notifications, clock),
+    new DeclineFamilyInviteUseCase(family, notifications, clock),
+    new RemoveFamilyMemberUseCase(family, notifications, clock),
+    new LeaveFamilyGroupUseCase(family, clock),
+    new DissolveFamilyGroupUseCase(family, notifications, clock),
+  ),
+  notifications: new NotificationsController(
+    new ListNotificationsUseCase(notifications),
+    new MarkNotificationReadUseCase(notifications, clock),
+    new MarkAllNotificationsReadUseCase(notifications, clock),
+  ),
 };
+
 const app = createHttpApp(controllers, tokens, config.frontendOrigins, config.swaggerEnabled);
 app.listen(config.port, () => console.info(`API disponível em http://localhost:${config.port}`));

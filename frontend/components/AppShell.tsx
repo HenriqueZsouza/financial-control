@@ -118,7 +118,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </Stack>
       <Box component="nav" sx={{ flex: 1 }}>
         {groups.map((group) => (
-          <List key={group.label} subheader={<Typography variant="overline" sx={{ px: 1.5 }}>{group.label}</Typography>} sx={{ mb: 1 }}>
+          <List
+            key={group.label}
+            subheader={
+              <Typography variant="overline" sx={{ px: 1.5 }}>
+                {group.label}
+              </Typography>
+            }
+            sx={{ mb: 1 }}
+          >
             {group.links.map((link) => {
               const Icon = link.icon;
               const selected = isActive(link.href);
@@ -197,7 +205,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 {valuesVisible ? <VisibilityOutlinedIcon /> : <VisibilityOffOutlinedIcon />}
               </IconButton>
             </Tooltip>
-            <Tooltip title="Notificações"><IconButton component={NextLink} href="/notificacoes" aria-label="Notificações"><Badge badgeContent={notificationData?.notifications.unreadCount ?? 0} color="error"><NotificationsOutlinedIcon /></Badge></IconButton></Tooltip>
+            <Tooltip title="Notificações">
+              <IconButton component={NextLink} href="/notificacoes" aria-label="Notificações">
+                <Badge badgeContent={notificationData?.notifications.unreadCount ?? 0} color="error">
+                  <NotificationsOutlinedIcon />
+                </Badge>
+              </IconButton>
+            </Tooltip>
             <Divider orientation="vertical" flexItem sx={{ mx: 1, my: 1.5 }} />
             <Avatar sx={{ width: 36, height: 36, bgcolor: tokens.ink, fontSize: 12, fontFamily: 'var(--font-display), "Space Grotesk", sans-serif' }}>
               {initials}

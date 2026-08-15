@@ -1,13 +1,33 @@
 import type { AppNotification, Category, FamilyGroup, FamilyInvite, Summary, Transaction, User } from './types';
 
 const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3333';
-export class ApiError extends Error { constructor(public code: string, message: string, public details?: unknown) { super(message); } }
+
+export class ApiError extends Error {
+  constructor(
+    public code: string,
+    message: string,
+    public details?: unknown,
+  ) {
+    super(message);
+  }
+}
 
 export async function api<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = typeof window !== 'undefined' ? localStorage.getItem('financial-control:token') : null;
-  const response = await fetch(`${baseUrl}${path}`, { ...options, headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}), ...options.headers } });
+
+  const response = await fetch(`${baseUrl}${path}`, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...options.headers,
+    },
+  });
+
   if (response.status === 204) return undefined as T;
+
   const body = await response.json().catch(() => ({}));
+
   if (!response.ok) throw new ApiError(body.code ?? 'REQUEST_ERROR', body.message ?? 'Não foi possível concluir a solicitação.', body.details);
   return body as T;
 }

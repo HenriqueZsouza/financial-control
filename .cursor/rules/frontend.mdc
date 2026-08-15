@@ -38,6 +38,34 @@ Use `frontend/lib/dates.ts`. Exibição canônica: `DD/MM/YYYY HH:mm:ss` (`forma
 - Validação de formulário: Zod. Valores monetários em centavos na API.
 - Condicional JSX: ternário, não `&&` com número/string.
 
+## Formatação e legibilidade
+
+- Indentação com **2 espaços**; não misturar tabs.
+- **Um import por linha**; agrupe por origem (React, libs, MUI, locais).
+- **Uma instrução por linha** — não comprimir `const`, `if`, callbacks ou JSX em linha única.
+- **JSX**: um elemento por linha; filhos indentados; tag de fechamento alinhada à abertura.
+- Props longas quebrem em linhas separadas; objetos `sx` com mais de 2 chaves em bloco multilinha.
+- Tipos com vários campos: um campo por linha.
+
+```tsx
+// ❌
+<Tooltip title="Notificações"><IconButton href="/notificacoes"><Badge><Icon /></Badge></IconButton></Tooltip>
+const login = useCallback(async (email, password) => { const r = await services.login({ email, password }); setUser(r.user); }, []);
+
+// ✅
+<Tooltip title="Notificações">
+  <IconButton href="/notificacoes">
+    <Badge>
+      <Icon />
+    </Badge>
+  </IconButton>
+</Tooltip>
+const login = useCallback(async (email, password) => {
+  const result = await services.login({ email, password });
+  setUser(result.user);
+}, []);
+```
+
 ```tsx
 // ❌
 <button className="primary">Salvar</button>
