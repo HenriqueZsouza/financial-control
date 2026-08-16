@@ -1,0 +1,13 @@
+@tailwind utilities;
+
+:root {
+  --paper: #eef1f4;
+  --ink: #14181f;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

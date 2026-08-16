@@ -1,0 +1,159 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+}
+
+enum PaymentType {
+  CASH
+  CREDIT_1X
+  INSTALLMENT
+}
+enum FamilyGroupStatus {
+  ACTIVE
+  DISSOLVED
+}
+enum FamilyMemberRole {
+  OWNER
+  MEMBER
+}
+enum FamilyMembershipStatus {
+  ACTIVE
+  LEFT
+  REMOVED
+}
+enum FamilyInviteStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  CANCELLED
+  EXPIRED
+}
+enum NotificationType {
+  FAMILY_INVITE_RECEIVED
+  INVITE_ACCEPTED
+  INVITE_DECLINED
+  MEMBER_REMOVED
+  GROUP_DISSOLVED
+}
+
+model User {
+  id           Int           @id @default(autoincrement())
+  firstName    String
+  lastName     String
+  email        String        @unique
+  phone        String
+  passwordHash String
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  deletedAt    DateTime?
+  transactions Transaction[]
+  memberships FamilyMembership[]
+  invitesSent FamilyInvite[] @relation("inviter")
+  invitesReceived FamilyInvite[] @relation("invitee")
+  notifications Notification[]
+
+  @@map("users")
+}
+
+model FamilyGroup {
+  id Int @id @default(autoincrement())
+  name String
+  status FamilyGroupStatus @default(ACTIVE)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+  memberships FamilyMembership[]
+  invites FamilyInvite[]
+  @@map("family_groups")
+}
+model FamilyMembership {
+  id Int @id @default(autoincrement())
+  familyGroupId Int
+  userId Int
+  role FamilyMemberRole
+  status FamilyMembershipStatus @default(ACTIVE)
+  joinedAt DateTime
+  leftAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  familyGroup FamilyGroup @relation(fields: [familyGroupId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([familyGroupId, userId])
+  @@index([userId, status])
+  @@map("family_memberships")
+}
+model FamilyInvite {
+  id Int @id @default(autoincrement())
+  familyGroupId Int
+  inviterId Int
+  inviteeId Int
+  inviteeEmail String
+  status FamilyInviteStatus @default(PENDING)
+  respondedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  familyGroup FamilyGroup @relation(fields: [familyGroupId], references: [id], onDelete: Cascade)
+  inviter User @relation("inviter", fields: [inviterId], references: [id], onDelete: Cascade)
+  invitee User @relation("invitee", fields: [inviteeId], references: [id], onDelete: Cascade)
+  @@index([inviteeId, status])
+  @@index([familyGroupId, status])
+  @@map("family_invites")
+}
+model Notification {
+  id Int @id @default(autoincrement())
+  userId Int
+  type NotificationType
+  title String
+  body String
+  payload Json?
+  readAt DateTime?
+  createdAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId, readAt, createdAt])
+  @@map("notifications")
+}
+
+model Category {
+  id           Int           @id @default(autoincrement())
+  name         String
+  slug         String        @unique
+  icon         String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  transactions Transaction[]
+
+  @@map("categories")
+}
+
+model Transaction {
+  id                 Int             @id @default(autoincrement())
+  userId             Int
+  categoryId         Int
+  type               TransactionType
+  name               String
+  amount             Int
+  paymentType        PaymentType
+  installmentsCount  Int?
+  installmentGroupId Int?
+  installmentNumber  Int?
+  date               DateTime
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  deletedAt          DateTime?
+  user               User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category           Category        @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  @@index([userId, date])
+  @@index([userId, deletedAt])
+  @@index([installmentGroupId])
+  @@map("transactions")
+}

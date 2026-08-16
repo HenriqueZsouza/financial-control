@@ -1,0 +1,77 @@
+---
+description: Padrão visual e técnico do frontend Next.js — obrigatório em qualquer mudança em frontend/
+globs: frontend/**/*.{ts,tsx,css}
+alwaysApply: false
+---
+
+# Frontend — Financial Control
+
+Preserve `docs/API.md`. Não invente rotas, campos ou status.
+
+## UI: MUI primeiro
+
+Não recrie Button, TextField, Select, Dialog, Alert, Snackbar, Chip, Table ou Autocomplete. Importe o componente pelo caminho direto:
+
+```tsx
+import Button from '@mui/material/Button';
+import Alert from '@mui/material/Alert';
+```
+
+- Erro de formulário: `Alert` inline (`Feedback`).
+- Sucesso/aviso global: `useFeedback().notify(...)`.
+- Confirmação destrutiva: `ConfirmDialog`.
+- Layout: `Stack` / `Box` / `Paper` + `sx` do tema. Não volte classes CSS de botão/alerta/tabela.
+
+## Identidade visual
+
+A cor saturada só aparece em dinheiro (`Amount`, gráficos). Primary do tema é tinta (`#14181F`), não azul MUI. Botões em sentence case. Não troque a paleta nem as fontes (Space Grotesk + Inter + JetBrains Mono).
+
+## Datas: dayjs
+
+Use `frontend/lib/dates.ts`. Exibição canônica: `DD/MM/YYYY HH:mm:ss` (`formatDateTime`). Campo de calendário: `DatePicker` com `DATE_FORMAT`. Payload da API: `toApiDate` → `YYYY-MM-DD`. Não use `new Date()` nem `toLocaleDateString` nas páginas.
+
+## React / Next
+
+- `'use client'` só no subtree que precisa de estado, eventos ou browser APIs.
+- Chart.js via `next/dynamic` (`ssr: false`).
+- Dados remotos: React Query + `queryKeys`. Mutação: `useMutation` ou invalidação explícita.
+- Validação de formulário: Zod. Valores monetários em centavos na API.
+- Condicional JSX: ternário, não `&&` com número/string.
+
+## Formatação e legibilidade
+
+- Indentação com **2 espaços**; não misturar tabs.
+- **Um import por linha**; agrupe por origem (React, libs, MUI, locais).
+- **Uma instrução por linha** — não comprimir `const`, `if`, callbacks ou JSX em linha única.
+- **JSX**: um elemento por linha; filhos indentados; tag de fechamento alinhada à abertura.
+- Props longas quebrem em linhas separadas; objetos `sx` com mais de 2 chaves em bloco multilinha.
+- Tipos com vários campos: um campo por linha.
+
+```tsx
+// ❌
+<Tooltip title="Notificações"><IconButton href="/notificacoes"><Badge><Icon /></Badge></IconButton></Tooltip>
+const login = useCallback(async (email, password) => { const r = await services.login({ email, password }); setUser(r.user); }, []);
+
+// ✅
+<Tooltip title="Notificações">
+  <IconButton href="/notificacoes">
+    <Badge>
+      <Icon />
+    </Badge>
+  </IconButton>
+</Tooltip>
+const login = useCallback(async (email, password) => {
+  const result = await services.login({ email, password });
+  setUser(result.user);
+}, []);
+```
+
+```tsx
+// ❌
+<button className="primary">Salvar</button>
+<span>{dayjs(date).format('YYYY-MM-DD')}</span>
+
+// ✅
+<Button variant="contained">Salvar</Button>
+<span>{formatDateTime(date)}</span>
+```

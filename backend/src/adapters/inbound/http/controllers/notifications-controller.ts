@@ -1,0 +1,42 @@
+import type { NextFunction, Request, Response } from 'express';
+import type {
+  ListNotifications,
+  MarkAllNotificationsRead,
+  MarkNotificationRead,
+} from '../../../../application/ports/inbound/family.js';
+import { familyIdSchema, notificationQuerySchema } from '../dto/family-dto.js';
+
+export class NotificationsController {
+  constructor(
+    private listNotifications: ListNotifications,
+    private markRead: MarkNotificationRead,
+    private markAllRead: MarkAllNotificationsRead,
+  ) {}
+
+  list = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { unreadOnly } = notificationQuerySchema.parse(req.query);
+      res.json({ notifications: await this.listNotifications.execute(req.userId!, unreadOnly === 'true') });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  read = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      await this.markRead.execute(req.userId!, familyIdSchema.parse(req.params.id));
+      res.status(204).send();
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  readAll = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      await this.markAllRead.execute(req.userId!);
+      res.status(204).send();
+    } catch (error) {
+      next(error);
+    }
+  };
+}
