@@ -30,6 +30,14 @@ export function splitInstallments(amount: number, count: number, date: Date): In
   return Array.from({ length: count }, (_, index) => ({
     amount: index === count - 1 ? base + remainder : base,
     installmentNumber: index + 1,
-    date: new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + index, date.getUTCDate())),
+    date: new Date(Date.UTC(
+      date.getUTCFullYear(),
+      date.getUTCMonth() + index,
+      date.getUTCDate(),
+      date.getUTCHours(),
+      date.getUTCMinutes(),
+      date.getUTCSeconds(),
+      date.getUTCMilliseconds(),
+    )),
   }));
 }

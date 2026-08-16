@@ -17,7 +17,7 @@ import { GetTransactionUseCase } from './transactions/get-transaction.js';
 import { DeleteTransactionUseCase } from './transactions/delete-transaction.js';
 import { GetDashboardSummaryUseCase } from './dashboard/get-dashboard-summary.js';
 
-const fixedClock: Clock = { now: () => new Date('2026-08-13T12:00:00.000Z') };
+const fixedClock: Clock = { now: () => new Date('2026-08-13T12:34:56.000Z') };
 const hasher: PasswordHasher = { hash: async (value) => `hash:${value}`, compare: async (value, hash) => hash === `hash:${value}` };
 const tokens: TokenIssuer = { sign: (id) => `token:${id}`, verify: (token) => Number(token.slice(6)) };
 const ids: IdGenerator = { generate: async () => 1 };
@@ -66,21 +66,28 @@ test('parcelas preservam centavos e meses, e cash gera um lançamento', async ()
   const repository = new Transactions(); const create = new CreateTransactionUseCase(repository, new Categories(), fixedClock, ids);
   const installment = await create.execute(1, { type: 'EXPENSE', name: 'Compra', amount: 100, categoryId: 1, paymentType: 'INSTALLMENT', installmentsCount: 3, date: new Date('2026-01-15T00:00:00Z') });
   assert.equal(installment.length, 3); assert.equal(repository.created.reduce((sum, item) => sum + item.amount, 0), 100); assert.deepEqual(repository.created.map((item) => item.date.getUTCMonth()), [0, 1, 2]);
+  assert.deepEqual(repository.created.map((item) => item.date.getUTCHours()), [12, 12, 12]);
+  assert.deepEqual(repository.created.map((item) => item.date.getUTCMinutes()), [34, 34, 34]);
   repository.created = [];
   await create.execute(1, { type: 'INCOME', name: 'Salário', amount: 1000, categoryId: 1, paymentType: 'CASH' });
   assert.equal(repository.created[0].installmentsCount, null);
+  assert.equal(repository.created[0].date.toISOString(), '2026-08-13T12:34:56.000Z');
+  repository.created = [];
+  const timed = await create.execute(1, { type: 'EXPENSE', name: 'Uber', amount: 2500, categoryId: 1, paymentType: 'CASH', date: new Date('2026-02-10T18:22:11.000Z') });
+  assert.equal(timed[0].date.toISOString(), '2026-02-10T18:22:11.000Z');
   repository.created = [];
   const credit = await create.execute(1, { type: 'EXPENSE', name: 'Restaurante', amount: 8500, categoryId: 1, paymentType: 'CREDIT_1X', date: new Date('2026-02-10T00:00:00Z') });
   assert.equal(credit.length, 1);
   assert.equal(credit[0].paymentType, 'CREDIT_1X');
   assert.equal(credit[0].installmentsCount, null);
+  assert.equal(credit[0].date.toISOString(), '2026-02-10T12:34:56.000Z');
   await expectsDomainError(() => create.execute(1, { type: 'INCOME', name: 'X', amount: 1, categoryId: 99, paymentType: 'CASH' }), 'INVALID_CATEGORY');
 });
 
 test('transações isolam usuário, restringem parcela e fazem soft delete', async () => {
   const repo = new Transactions(); repo.current = { id: 1, userId: 1, installmentGroupId: 1, deletedAt: null };
   await expectsDomainError(() => new GetTransactionUseCase(repo).execute(2, 1), 'NOT_FOUND');
-  const update = new UpdateTransactionUseCase(repo, new Categories());
+  const update = new UpdateTransactionUseCase(repo, new Categories(), fixedClock);
   await expectsDomainError(() => update.execute(1, 1, { amount: 2 }), 'INSTALLMENT_RESTRICTION');
   repo.current.installmentGroupId = null;
   await expectsDomainError(() => update.execute(1, 1, { paymentType: 'INSTALLMENT' }), 'PAYMENT_TYPE_RESTRICTION');

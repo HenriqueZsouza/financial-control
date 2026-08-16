@@ -12,7 +12,7 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { ApiError, services } from '../lib/api';
-import { DATE_FORMAT, parseApiDate, toApiDate } from '../lib/dates';
+import { DATE_FORMAT, parseApiDate, toApiDateTime } from '../lib/dates';
 import { centsToCurrencyInput, currencyInputToCents, formatCurrencyInput } from '../lib/format';
 import { useFeedback } from '../lib/feedback';
 import { queryKeys } from '../lib/query-keys';
@@ -57,7 +57,7 @@ export function TransactionForm({ initial, onSaved }: { initial?: Transaction; o
       ...base,
       categoryId: Number(categoryId),
       amount: amountCents,
-      date: toApiDate(date),
+      date: toApiDateTime(date, initial?.date),
       ...(base.paymentType === 'INSTALLMENT' ? { installmentsCount: Number(installmentsCount) } : {}),
     };
     setPending(true);

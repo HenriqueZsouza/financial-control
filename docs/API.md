@@ -27,12 +27,13 @@ Para explorar o contrato completo e executar requests localmente, abra a [Swagge
 | POST | `/api/notifications/:id/read` | — | 204 |
 | POST | `/api/notifications/read-all` | — | 204 |
 
-Exemplo de criação à vista:
+Exemplo de criação à vista (`date` aceita `AAAA-MM-DD` ou ISO 8601 com horário; o frontend envia ISO com o horário da operação):
 
 ```json
-{ "type": "EXPENSE", "name": "Mercado", "amount": 15000, "categoryId": 1, "paymentType": "CASH", "date": "2026-08-12" }
+{ "type": "EXPENSE", "name": "Mercado", "amount": 15000, "categoryId": 1, "paymentType": "CASH", "date": "2026-08-12T18:30:00.000Z" }
 ```
 
+Com `AAAA-MM-DD` apenas, a API aplica o horário atual do servidor no dia informado.
 Para crédito à vista (1x), use `paymentType: "CREDIT_1X"` — um único lançamento, sem grupo de parcelas.
 
 Para parcelar, envie `paymentType: "INSTALLMENT"` e `installmentsCount`. A API distribui as parcelas mensalmente.

@@ -65,7 +65,7 @@ const controllers = {
     new CreateTransactionUseCase(transactions, categories, clock, ids),
     new ListTransactionsUseCase(transactions, family),
     new GetTransactionUseCase(transactions),
-    new UpdateTransactionUseCase(transactions, categories),
+    new UpdateTransactionUseCase(transactions, categories, clock),
     new DeleteTransactionUseCase(transactions, clock),
   ),
   dashboard: new DashboardController(new GetDashboardSummaryUseCase(transactions, clock)),

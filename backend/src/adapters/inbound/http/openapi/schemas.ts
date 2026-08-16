@@ -85,14 +85,14 @@ export const openApiSchemas = {
       type: { $ref: '#/components/schemas/TransactionType' }, name: { type: 'string', minLength: 1, maxLength: 160, example: 'Mercado' },
       amount: { type: 'integer', minimum: 1, description: 'Valor monetário em centavos.', example: 15000 }, categoryId: { type: 'integer', minimum: 1, example: 1 },
       paymentType: { $ref: '#/components/schemas/PaymentType' }, installmentsCount: { type: 'integer', minimum: 2, maximum: 120 },
-      date: { type: 'string', format: 'date', pattern: '^\\d{4}-\\d{2}-\\d{2}$', example: '2026-08-12' },
+      date: { type: 'string', format: 'date-time', description: 'AAAA-MM-DD ou ISO 8601 com horário da operação.', example: '2026-08-12T18:30:00.000Z' },
     },
   },
   UpdateTransactionRequest: {
     type: 'object', properties: {
       type: { $ref: '#/components/schemas/TransactionType' }, name: { type: 'string', minLength: 1, maxLength: 160 },
       amount: { type: 'integer', minimum: 1, description: 'Valor monetário em centavos.' }, categoryId: { type: 'integer', minimum: 1 },
-      paymentType: { $ref: '#/components/schemas/PaymentType' }, date: { type: 'string', format: 'date', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
+      paymentType: { $ref: '#/components/schemas/PaymentType' }, date: { type: 'string', format: 'date-time', description: 'AAAA-MM-DD ou ISO 8601 com horário da operação.' },
     },
   },
   TransactionsResponse: { type: 'object', required: ['transactions'], properties: { transactions: { type: 'array', items: { $ref: '#/components/schemas/Transaction' } } } },

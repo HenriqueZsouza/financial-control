@@ -28,7 +28,7 @@ A cor saturada só aparece em dinheiro (`Amount`, gráficos). Primary do tema é
 
 ## Datas: dayjs
 
-Use `frontend/lib/dates.ts`. Exibição canônica: `DD/MM/YYYY HH:mm:ss` (`formatDateTime`). Campo de calendário: `DatePicker` com `DATE_FORMAT`. Payload da API: `toApiDate` → `YYYY-MM-DD`. Não use `new Date()` nem `toLocaleDateString` nas páginas.
+Use `frontend/lib/dates.ts`. Exibição canônica: `DD/MM/YYYY HH:mm:ss` (`formatDateTime`). Campo de calendário: `DatePicker` com `DATE_FORMAT`. Filtros de período: `toApiDate` → `YYYY-MM-DD`. Lançamentos: `toApiDateTime` → ISO 8601 com horário da operação. Não use `new Date()` nem `toLocaleDateString` nas páginas.
 
 ## React / Next
 
