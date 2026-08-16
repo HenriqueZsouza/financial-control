@@ -7,7 +7,11 @@ const body = Inter({ subsets: ['latin'], variable: '--font-body', display: 'swap
 const display = Space_Grotesk({ subsets: ['latin'], variable: '--font-display', display: 'swap' });
 const mono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono', display: 'swap' });
 
-export const metadata: Metadata = { title: 'Financial Control', description: 'Controle financeiro familiar' };
+export const metadata: Metadata = {
+  title: 'Financial Control',
+  description: 'Controle financeiro familiar',
+  icons: { icon: '/favicon.svg' },
+};
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (

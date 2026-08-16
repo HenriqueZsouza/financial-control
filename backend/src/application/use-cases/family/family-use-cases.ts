@@ -45,14 +45,15 @@ export class InviteFamilyMemberUseCase implements InviteFamilyMember {
       throw new DomainError('INVITE_ALREADY_PENDING', 'Este usuário já possui um convite pendente.');
     }
 
+    const inviter = await this.users.findActiveById(userId);
+    if (!inviter) throw new DomainError('NOT_FOUND', 'Usuário não encontrado.');
+
     let membership = await this.family.getActiveMembership(userId);
     if (membership && membership.role !== 'OWNER') {
       throw new DomainError('FORBIDDEN', 'Apenas o proprietário pode convidar membros.');
     }
     if (!membership) {
-      const owner = await this.users.findActiveById(userId);
-      if (!owner) throw new DomainError('NOT_FOUND', 'Usuário não encontrado.');
-      await this.family.createGroup(owner, this.clock.now());
+      await this.family.createGroup(inviter, this.clock.now());
       membership = await this.family.getActiveMembership(userId);
     }
 
@@ -62,11 +63,12 @@ export class InviteFamilyMemberUseCase implements InviteFamilyMember {
       inviteeId: invitee.id,
       inviteeEmail: invitee.email,
     });
+    const inviterName = `${inviter.firstName} ${inviter.lastName}`.trim();
     await this.notifications.create({
       userId: invitee.id,
       type: 'FAMILY_INVITE_RECEIVED',
       title: 'Novo convite familiar',
-      body: 'Você recebeu um convite para participar de um grupo familiar.',
+      body: `${inviterName} convidou você para participar de um grupo familiar.`,
       payload: { inviteId: invite.id, familyGroupId: invite.familyGroupId },
     });
     return invite;

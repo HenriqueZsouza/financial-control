@@ -55,6 +55,7 @@ export type FamilyInvite = {
   inviteeEmail: string;
   status: string;
   createdAt: string;
+  inviter: { firstName: string; lastName: string };
 };
 
 export type AppNotification = {

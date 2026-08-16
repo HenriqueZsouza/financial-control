@@ -104,7 +104,7 @@ export default function FamilyPage() {
           {invites!.invites.map((item) => (
             <Alert
               key={item.id}
-              severity="info"
+              severity="warning"
               action={
                 <Stack direction="row" spacing={1}>
                   <Button size="small" onClick={() => respond.mutate({ id: item.id, accept: true })}>
@@ -116,7 +116,7 @@ export default function FamilyPage() {
                 </Stack>
               }
             >
-              Você recebeu um convite para participar de um grupo familiar.
+              {`${item.inviter.firstName} ${item.inviter.lastName}`.trim()} convidou você para participar de um grupo familiar.
             </Alert>
           ))}
         </Stack>

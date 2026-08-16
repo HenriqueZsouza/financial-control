@@ -17,7 +17,7 @@ Para explorar o contrato completo e executar requests localmente, abra a [Swagge
 | GET | `/api/dashboard/summary` | `month`, `year` | totais e categorias |
 | GET | `/api/family` | — | `{ group }`, sendo `group: null` sem grupo ativo |
 | POST | `/api/family/invites` | `email` | convite (201) e criação implícita do grupo |
-| GET | `/api/family/invites/received` | — | convites pendentes recebidos |
+| GET | `/api/family/invites/received` | — | convites pendentes recebidos (inclui `inviter: { firstName, lastName }`) |
 | POST | `/api/family/invites/:id/accept` | — | grupo atualizado |
 | POST | `/api/family/invites/:id/decline` | — | 204 |
 | DELETE | `/api/family/members/:userId` | — | 204; somente owner |
