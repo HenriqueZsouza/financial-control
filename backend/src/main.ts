@@ -2,7 +2,9 @@ import 'dotenv/config';
 import { createHttpApp } from './adapters/inbound/http/app.js';
 import { AuthController } from './adapters/inbound/http/controllers/auth-controller.js';
 import { CategoriesController } from './adapters/inbound/http/controllers/categories-controller.js';
+import { CreditCardController } from './adapters/inbound/http/controllers/credit-card-controller.js';
 import { DashboardController } from './adapters/inbound/http/controllers/dashboard-controller.js';
+import { PayableController } from './adapters/inbound/http/controllers/payable-controller.js';
 import { TransactionsController } from './adapters/inbound/http/controllers/transactions-controller.js';
 import { UsersController } from './adapters/inbound/http/controllers/users-controller.js';
 import { FamilyController } from './adapters/inbound/http/controllers/family-controller.js';
@@ -10,6 +12,7 @@ import { NotificationsController } from './adapters/inbound/http/controllers/not
 import { SystemClock } from './adapters/outbound/clock/system-clock.js';
 import { PrismaCategoryRepository } from './adapters/outbound/prisma/prisma-category-repository.js';
 import { PrismaSequenceIdGenerator } from './adapters/outbound/prisma/prisma-sequence-id-generator.js';
+import { PrismaPayableRepository } from './adapters/outbound/prisma/prisma-payable-repository.js';
 import { PrismaTransactionRepository } from './adapters/outbound/prisma/prisma-transaction-repository.js';
 import { PrismaUserRepository } from './adapters/outbound/prisma/prisma-user-repository.js';
 import { PrismaFamilyRepository, PrismaNotificationRepository } from './adapters/outbound/prisma/prisma-family-repository.js';
@@ -19,7 +22,11 @@ import { GetCurrentUserUseCase } from './application/use-cases/auth/get-current-
 import { LoginUserUseCase } from './application/use-cases/auth/login-user.js';
 import { RegisterUserUseCase } from './application/use-cases/auth/register-user.js';
 import { ListCategoriesUseCase } from './application/use-cases/categories/list-categories.js';
+import { GetCreditCardReportUseCase } from './application/use-cases/credit-card/get-credit-card-report.js';
+import { GetOpenCreditCardInvoiceUseCase } from './application/use-cases/credit-card/get-open-credit-card-invoice.js';
+import { CloseCreditCardInvoiceUseCase } from './application/use-cases/credit-card/close-credit-card-invoice.js';
 import { GetDashboardSummaryUseCase } from './application/use-cases/dashboard/get-dashboard-summary.js';
+import { ListPayablesUseCase } from './application/use-cases/payables/list-payables.js';
 import { DeleteTransactionUseCase } from './application/use-cases/transactions/delete-transaction.js';
 import { CreateTransactionUseCase } from './application/use-cases/transactions/create-transaction.js';
 import { GetTransactionUseCase } from './application/use-cases/transactions/get-transaction.js';
@@ -46,6 +53,7 @@ import { config } from './config/index.js';
 const users = new PrismaUserRepository();
 const categories = new PrismaCategoryRepository();
 const transactions = new PrismaTransactionRepository();
+const payables = new PrismaPayableRepository();
 const family = new PrismaFamilyRepository();
 const notifications = new PrismaNotificationRepository();
 const clock = new SystemClock();
@@ -69,6 +77,12 @@ const controllers = {
     new DeleteTransactionUseCase(transactions, clock),
   ),
   dashboard: new DashboardController(new GetDashboardSummaryUseCase(transactions, clock)),
+  creditCard: new CreditCardController(
+    new GetCreditCardReportUseCase(transactions, clock),
+    new GetOpenCreditCardInvoiceUseCase(transactions, clock),
+    new CloseCreditCardInvoiceUseCase(transactions, payables, clock),
+  ),
+  payables: new PayableController(new ListPayablesUseCase(payables, clock)),
   family: new FamilyController(
     new GetMyFamilyUseCase(family),
     new InviteFamilyMemberUseCase(family, users, notifications, clock),

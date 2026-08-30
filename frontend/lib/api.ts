@@ -1,4 +1,16 @@
-import type { AppNotification, Category, FamilyGroup, FamilyInvite, Summary, Transaction, User } from './types';
+import type {
+  AppNotification,
+  Category,
+  CreditCardReport,
+  FamilyGroup,
+  FamilyInvite,
+  OpenCreditCardInvoice,
+  Payable,
+  PayableList,
+  Summary,
+  Transaction,
+  User,
+} from './types';
 
 const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3333';
 
@@ -38,6 +50,13 @@ export const services = {
   register: (data: Record<string, string>) => api<{ user: User }>('/api/auth/register', { method: 'POST', body: JSON.stringify(data) }),
   categories: () => api<Category[]>('/api/categories'),
   summary: (month: number, year: number) => api<Summary>(`/api/dashboard/summary?month=${month}&year=${year}`),
+  creditCardReport: (month: number, year: number) => api<CreditCardReport>(`/api/credit-card/report?month=${month}&year=${year}`),
+  openCreditCardInvoice: () => api<OpenCreditCardInvoice>('/api/credit-card/open-invoice'),
+  closeCreditCardInvoice: (dueDate: string) => api<Payable>('/api/credit-card/invoices/close', {
+    method: 'POST',
+    body: JSON.stringify({ dueDate }),
+  }),
+  payables: (month: number, year: number) => api<PayableList>(`/api/payables?month=${month}&year=${year}`),
   transactions: (query: URLSearchParams) => api<{ transactions: Transaction[] }>(`/api/transactions?${query.toString()}`),
   transaction: (id: number | string) => api<{ transaction: Transaction }>(`/api/transactions/${id}`),
   createTransaction: (data: Record<string, unknown>) => api<{ transactions: Transaction[] }>('/api/transactions', { method: 'POST', body: JSON.stringify(data) }),

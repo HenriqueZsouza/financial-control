@@ -11,8 +11,10 @@ const isoDate = z.string().refine((value) => {
 
 export const idParamSchema = z.coerce.number().int().positive();
 
+const transactionType = z.enum(['INCOME', 'EXPENSE', 'INVESTMENT']);
+
 const fields = z.object({
-  type: z.enum(['INCOME', 'EXPENSE']),
+  type: transactionType,
   name: z.string().trim().min(1).max(160),
   amount: z.number().int().positive('O valor deve ser informado em centavos.'),
   categoryId: z.coerce.number().int().positive(),
@@ -37,7 +39,7 @@ export const listTransactionsSchema = z
   .object({
     month: z.coerce.number().int().min(1).max(12).optional(),
     year: z.coerce.number().int().min(2000).max(9999).optional(),
-    type: z.enum(['INCOME', 'EXPENSE']).optional(),
+    type: transactionType.optional(),
     categoryIds: z.union([z.string(), z.array(z.string())]).optional(),
     scope: z.enum(['personal', 'family']).optional(),
   })

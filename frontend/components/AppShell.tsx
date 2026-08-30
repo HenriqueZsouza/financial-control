@@ -53,16 +53,11 @@ const groups: {
         { href: '/lancamentos/novo', label: 'Cadastrar lançamento', icon: AddCircleOutlineIcon },
         { href: '/lancamentos', label: 'Lançamentos', icon: ReceiptLongOutlinedIcon },
         { href: '/relatorios', label: 'Relatório geral', icon: AssessmentOutlinedIcon },
-      ],
-    },
-    { label: 'Conta', links: [{ href: '/familia', label: 'Família', icon: FamilyRestroomOutlinedIcon }] },
-    {
-      label: 'Em breve',
-      links: [
         { href: '/cartao-credito', label: 'Cartão de crédito', icon: CreditCardOutlinedIcon },
         { href: '/contas-a-pagar', label: 'Contas a pagar', icon: ScheduleOutlinedIcon },
       ],
     },
+    { label: 'Conta', links: [{ href: '/familia', label: 'Família', icon: FamilyRestroomOutlinedIcon }] },
   ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {

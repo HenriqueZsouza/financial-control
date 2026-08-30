@@ -51,6 +51,7 @@ export const openApiDocument = {
           cash: { summary: 'Compra à vista', value: { type: 'EXPENSE', name: 'Mercado', amount: 15000, categoryId: 1, paymentType: 'CASH', date: '2026-08-12T18:30:00.000Z' } },
           credit1x: { summary: 'Crédito à vista (1x)', value: { type: 'EXPENSE', name: 'Restaurante', amount: 8500, categoryId: 1, paymentType: 'CREDIT_1X', date: '2026-08-12T18:30:00.000Z' } },
           installment: { summary: 'Compra parcelada', value: { type: 'EXPENSE', name: 'Notebook', amount: 360000, categoryId: 1, paymentType: 'INSTALLMENT', installmentsCount: 12, date: '2026-08-12T18:30:00.000Z' } },
+          investment: { summary: 'Investimento à vista', value: { type: 'INVESTMENT', name: 'Tesouro Selic', amount: 100000, categoryId: 1, paymentType: 'CASH', date: '2026-08-30T18:00:00.000Z' } },
         } } } },
         responses: { '201': { description: 'Lançamento(s) criado(s)', ...json('TransactionsResponse') }, '400': error('Categoria inválida.', 'INVALID_CATEGORY'), '401': error('Token ausente ou inválido.', 'UNAUTHENTICATED'), '500': error('Ocorreu um erro inesperado.', 'INTERNAL_ERROR') },
       },
@@ -58,13 +59,68 @@ export const openApiDocument = {
     '/api/transactions/{id}': {
       parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer', minimum: 1 }, description: 'ID numérico sequencial do lançamento.' }],
       get: { tags: ['Transactions'], summary: 'Obtém um lançamento', security: bearerSecurity, responses: { '200': { description: 'Lançamento', ...json('TransactionResponse') }, '401': error('Token ausente ou inválido.', 'UNAUTHENTICATED'), '404': error('Lançamento não encontrado.', 'NOT_FOUND') } },
-      patch: { tags: ['Transactions'], summary: 'Atualiza um lançamento', security: bearerSecurity, description: '`amount` é inteiro em centavos. A quantidade de parcelas não pode ser alterada.', requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/UpdateTransactionRequest' } } } }, responses: { '200': { description: 'Lançamento atualizado', ...json('TransactionResponse') }, '400': error('Categoria inválida ou dados inválidos.', 'INVALID_CATEGORY'), '401': error('Token ausente ou inválido.', 'UNAUTHENTICATED'), '404': error('Lançamento não encontrado.', 'NOT_FOUND'), '422': error('Alteração de parcela não permitida.', 'INSTALLMENT_RESTRICTION') } },
-      delete: { tags: ['Transactions'], summary: 'Exclui um lançamento', security: bearerSecurity, description: 'A exclusão é lógica (soft delete); o registro não é removido fisicamente.', responses: { '204': { description: 'Lançamento removido sem corpo de resposta' }, '401': error('Token ausente ou inválido.', 'UNAUTHENTICATED'), '404': error('Lançamento não encontrado.', 'NOT_FOUND') } },
+      patch: { tags: ['Transactions'], summary: 'Atualiza um lançamento', security: bearerSecurity, description: '`amount` é inteiro em centavos. A quantidade de parcelas não pode ser alterada. Lançamento já vinculado a fatura fechada não altera valor nem forma de pagamento.', requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/UpdateTransactionRequest' } } } }, responses: { '200': { description: 'Lançamento atualizado', ...json('TransactionResponse') }, '400': error('Categoria inválida ou dados inválidos.', 'INVALID_CATEGORY'), '401': error('Token ausente ou inválido.', 'UNAUTHENTICATED'), '404': error('Lançamento não encontrado.', 'NOT_FOUND'), '422': error('Alteração não permitida (parcela ou fatura fechada).', 'INVOICE_LOCKED') } },
+      delete: { tags: ['Transactions'], summary: 'Exclui um lançamento', security: bearerSecurity, description: 'A exclusão é lógica (soft delete); o registro não é removido fisicamente. Lançamento já vinculado a fatura fechada não pode ser excluído.', responses: { '204': { description: 'Lançamento removido sem corpo de resposta' }, '401': error('Token ausente ou inválido.', 'UNAUTHENTICATED'), '404': error('Lançamento não encontrado.', 'NOT_FOUND'), '422': error('Lançamento já faz parte de uma fatura fechada.', 'INVOICE_LOCKED') } },
     },
     '/api/dashboard/summary': {
       get: {
         tags: ['Dashboard'], summary: 'Obtém o resumo financeiro', security: bearerSecurity, description: '`month` e `year` devem ser informados juntos ou omitidos; sem filtro, usa o período atual.', parameters: periodParameters,
-        responses: { '200': { description: 'Resumo do período', ...json('DashboardSummary', { period: { month: 8, year: 2026 }, totalIncome: 500000, totalExpense: 150000, balance: 350000, byCategory: [{ categoryId: 1, name: 'Alimentação', total: 150000 }] }) }, '400': error('Mês e ano devem formar um período válido.', 'VALIDATION_ERROR'), '401': error('Token ausente ou inválido.', 'UNAUTHENTICATED') },
+        responses: { '200': { description: 'Resumo do período', ...json('DashboardSummary', { period: { month: 8, year: 2026 }, openingBalance: 30000, totalIncome: 500000, totalExpense: 150000, totalInvestment: 200000, balance: 380000, byCategory: [{ categoryId: 1, name: 'Alimentação', total: 150000 }] }) }, '400': error('Mês e ano devem formar um período válido.', 'VALIDATION_ERROR'), '401': error('Token ausente ou inválido.', 'UNAUTHENTICATED') },
+      },
+    },
+    '/api/credit-card/report': {
+      get: {
+        tags: ['Credit card'],
+        summary: 'Relatório mensal de compras no cartão',
+        security: bearerSecurity,
+        description: 'Soma e lista lançamentos `CREDIT_1X` e `INSTALLMENT` do usuário no período (`date` de cada linha). `CASH` não entra. Sem `month`/`year`, usa o mês atual. Linhas já fechadas continuam aparecendo.',
+        parameters: periodParameters,
+        responses: {
+          '200': { description: 'Relatório do período', ...json('CreditCardReport') },
+          '400': error('Mês e ano devem formar um período válido.', 'VALIDATION_ERROR'),
+          '401': error('Token ausente ou inválido.', 'UNAUTHENTICATED'),
+        },
+      },
+    },
+    '/api/credit-card/open-invoice': {
+      get: {
+        tags: ['Credit card'],
+        summary: 'Fatura em aberto',
+        security: bearerSecurity,
+        description: 'Totais das compras `CREDIT_1X` e `INSTALLMENT` ainda sem conta a pagar, com `date` até agora. Não fecha a fatura.',
+        responses: {
+          '200': { description: 'Fatura em aberto', ...json('OpenCreditCardInvoice') },
+          '401': error('Token ausente ou inválido.', 'UNAUTHENTICATED'),
+        },
+      },
+    },
+    '/api/credit-card/invoices/close': {
+      post: {
+        tags: ['Credit card'],
+        summary: 'Fecha a fatura em aberto',
+        security: bearerSecurity,
+        description: 'Única forma de fechar a fatura. Cria uma conta a pagar com o vencimento informado e vincula as linhas em aberto. Não cria despesa nova.',
+        requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/CloseInvoiceRequest' }, example: { dueDate: '2026-09-10' } } } },
+        responses: {
+          '201': { description: 'Conta a pagar criada', ...json('Payable') },
+          '400': error('Data de vencimento inválida.', 'VALIDATION_ERROR'),
+          '401': error('Token ausente ou inválido.', 'UNAUTHENTICATED'),
+          '422': error('Não há compras em aberto para fechar a fatura.', 'EMPTY_OPEN_INVOICE'),
+        },
+      },
+    },
+    '/api/payables': {
+      get: {
+        tags: ['Payables'],
+        summary: 'Relatório de contas a pagar',
+        security: bearerSecurity,
+        description: 'Lista contas a pagar do usuário filtradas pelo mês/ano do vencimento. Sem `month`/`year`, usa o mês atual. Não há cadastro manual nesta versão.',
+        parameters: periodParameters,
+        responses: {
+          '200': { description: 'Contas do período', ...json('PayableList') },
+          '400': error('Mês e ano devem formar um período válido.', 'VALIDATION_ERROR'),
+          '401': error('Token ausente ou inválido.', 'UNAUTHENTICATED'),
+        },
       },
     },
   },

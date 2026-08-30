@@ -13,6 +13,7 @@ import dynamic from 'next/dynamic';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Amount } from '../../components/Amount';
+import { OpenInvoiceCard } from '../../components/OpenInvoiceCard';
 import { PageHeader } from '../../components/PageHeader';
 import { PeriodFilter } from '../../components/PeriodFilter';
 import { services } from '../../lib/api';
@@ -42,7 +43,7 @@ export default function DashboardPage() {
       <PageHeader
         eyebrow="Visão do mês"
         title="Seu resumo financeiro"
-        description="Acompanhe o que entrou e saiu no período escolhido."
+        description="Acompanhe o que entrou, saiu e o que foi investido no período escolhido."
         action={<PeriodFilter {...period} onChange={setPeriod} />}
       />
       {isLoading ? (
@@ -73,10 +74,13 @@ export default function DashboardPage() {
               tone="auto"
               sx={{ display: 'block', fontSize: { xs: 44, md: 68 }, letterSpacing: '-0.04em', lineHeight: 1, mt: 2, mb: 0.5 }}
             />
+            <Typography color="text.secondary" variant="body2" sx={{ mt: 1 }}>
+              Inclui o saldo encerrado do mês anterior, positivo ou negativo.
+            </Typography>
             <Box
               sx={{
                 display: 'grid',
-                gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+                gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr 1fr' },
                 gap: '1px',
                 mt: 3,
                 bgcolor: 'divider',
@@ -85,6 +89,10 @@ export default function DashboardPage() {
               }}
             >
               <Box sx={{ bgcolor: 'background.paper', p: 2.25 }}>
+                <Typography variant="overline">Saldo anterior</Typography>
+                <Amount cents={data.openingBalance} visible={valuesVisible} tone="auto" sx={{ display: 'block', fontSize: 24, mt: 1 }} />
+              </Box>
+              <Box sx={{ bgcolor: 'background.paper', p: 2.25 }}>
                 <Typography variant="overline">Total de entradas</Typography>
                 <Amount cents={data.totalIncome} visible={valuesVisible} tone="income" sign="+" sx={{ display: 'block', fontSize: 24, mt: 1 }} />
               </Box>
@@ -92,11 +100,18 @@ export default function DashboardPage() {
                 <Typography variant="overline">Total de saídas</Typography>
                 <Amount cents={data.totalExpense} visible={valuesVisible} tone="expense" sign="−" sx={{ display: 'block', fontSize: 24, mt: 1 }} />
               </Box>
+              <Box sx={{ bgcolor: 'background.paper', p: 2.25 }}>
+                <Typography variant="overline">Investimentos do período</Typography>
+                <Amount cents={data.totalInvestment} visible={valuesVisible} tone="plain" sx={{ display: 'block', fontSize: 24, mt: 1 }} />
+              </Box>
             </Box>
           </Paper>
           <DashboardCharts summary={data} visible={valuesVisible} />
         </>
       )}
+      <Box sx={{ mt: 2.5 }}>
+        <OpenInvoiceCard visible={valuesVisible} />
+      </Box>
     </>
   );
 }

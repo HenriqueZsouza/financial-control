@@ -20,7 +20,7 @@ import type { PaymentType, Transaction } from '../lib/types';
 import { Feedback } from './Feedback';
 
 const schema = z.object({
-  type: z.enum(['INCOME', 'EXPENSE']),
+  type: z.enum(['INCOME', 'EXPENSE', 'INVESTMENT']),
   name: z.string().min(1, 'Informe um nome.'),
   amount: z.string().min(1, 'Informe o valor.'),
   categoryId: z.string().min(1, 'Escolha uma categoria.'),
@@ -100,6 +100,7 @@ export function TransactionForm({ initial, onSaved }: { initial?: Transaction; o
           <TextField select name="type" label="Tipo" defaultValue={initial?.type ?? 'EXPENSE'}>
             <MenuItem value="EXPENSE">Despesa</MenuItem>
             <MenuItem value="INCOME">Entrada</MenuItem>
+            <MenuItem value="INVESTMENT">Investimento</MenuItem>
           </TextField>
           <DatePicker
             label="Data"

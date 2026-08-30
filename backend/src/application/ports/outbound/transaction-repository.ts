@@ -5,7 +5,13 @@ export interface CreateTransactionData {
   userId: number; categoryId: number; type: TransactionType; name: string; amount: number; paymentType: PaymentType;
   installmentsCount: number | null; installmentGroupId: number | null; installmentNumber: number | null; date: Date;
 }
-export interface TransactionFilters { period?: Period; categoryIds?: number[]; type?: TransactionType; userIds?: number[] }
+export interface TransactionFilters {
+  period?: Period;
+  categoryIds?: number[];
+  type?: TransactionType;
+  userIds?: number[];
+  paymentTypes?: PaymentType[];
+}
 export interface UpdateTransactionData { type?: TransactionType; name?: string; amount?: number; categoryId?: number; paymentType?: PaymentType; date?: Date }
 export interface CategoryTotal { categoryId: number; name: string; total: number }
 export interface TransactionRepository {
@@ -15,5 +21,12 @@ export interface TransactionRepository {
   findActiveById(userId: number, id: number): Promise<Transaction | null>;
   update(id: number, data: UpdateTransactionData): Promise<Transaction>;
   softDelete(id: number, deletedAt: Date): Promise<void>;
-  summary(userId: number, period: Period): Promise<{ totalIncome: number; totalExpense: number; byCategory: CategoryTotal[] }>;
+  summary(userId: number, period: Period): Promise<{
+    totalIncome: number;
+    totalExpense: number;
+    totalInvestment: number;
+    openingBalance: number;
+    byCategory: CategoryTotal[];
+  }>;
+  listOpenCreditCard(userId: number, now: Date): Promise<Transaction[]>;
 }

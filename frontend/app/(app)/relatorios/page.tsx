@@ -1,7 +1,6 @@
 'use client';
 
 import Autocomplete from '@mui/material/Autocomplete';
-import Chip from '@mui/material/Chip';
 import CircularProgress from '@mui/material/CircularProgress';
 import MenuItem from '@mui/material/MenuItem';
 import Paper from '@mui/material/Paper';
@@ -19,10 +18,12 @@ import { Amount } from '../../../components/Amount';
 import { Empty } from '../../../components/Empty';
 import { PageHeader } from '../../../components/PageHeader';
 import { PeriodFilter } from '../../../components/PeriodFilter';
+import { TransactionTypeChip } from '../../../components/TransactionTypeChip';
 import { services } from '../../../lib/api';
 import { useAuth } from '../../../lib/auth';
 import { currentPeriod, formatDateTime } from '../../../lib/dates';
 import { queryKeys } from '../../../lib/query-keys';
+import { transactionAmountTone } from '../../../lib/transaction-ui';
 import type { Category } from '../../../lib/types';
 
 export default function ReportsPage() {
@@ -44,20 +45,21 @@ export default function ReportsPage() {
     queryFn: () => services.transactions(params),
   });
 
-  const { totalIncome, totalExpense } = useMemo(() => {
+  const { totalIncome, totalExpense, totalInvestment } = useMemo(() => {
     const items = data?.transactions ?? [];
     return {
       totalIncome: items.filter((item) => item.type === 'INCOME').reduce((sum, item) => sum + item.amount, 0),
       totalExpense: items.filter((item) => item.type === 'EXPENSE').reduce((sum, item) => sum + item.amount, 0),
+      totalInvestment: items.filter((item) => item.type === 'INVESTMENT').reduce((sum, item) => sum + item.amount, 0),
     };
   }, [data]);
 
   return (
     <>
-      <PageHeader eyebrow="Análise" title="Relatório geral" description="Analise os lançamentos por período, categoria e tipo." />
+      <PageHeader eyebrow="Análise" title="Relatório geral" description="Analise os lançamentos por período, categoria e tipo. Meses futuros não entram no filtro." />
       <Paper sx={{ p: 2.25, mb: 2.25, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems={{ md: 'flex-end' }}>
-          <PeriodFilter {...period} onChange={setPeriod} />
+          <PeriodFilter {...period} onChange={setPeriod} disableFuture />
           <Autocomplete
             multiple
             options={allCategories ?? []}
@@ -72,6 +74,7 @@ export default function ReportsPage() {
             <MenuItem value="">Todos</MenuItem>
             <MenuItem value="INCOME">Entradas</MenuItem>
             <MenuItem value="EXPENSE">Despesas</MenuItem>
+            <MenuItem value="INVESTMENT">Investimentos</MenuItem>
           </TextField>
           <TextField select label="Escopo" value={scope} onChange={(event) => setScope(event.target.value as 'personal' | 'family')} sx={{ minWidth: 180 }}>
             <MenuItem value="personal">Individual</MenuItem>
@@ -79,7 +82,7 @@ export default function ReportsPage() {
           </TextField>
         </Stack>
       </Paper>
-      <BoxCards totalIncome={totalIncome} totalExpense={totalExpense} visible={valuesVisible} />
+      <BoxCards totalIncome={totalIncome} totalExpense={totalExpense} totalInvestment={totalInvestment} visible={valuesVisible} />
       <Paper sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, overflow: 'auto' }}>
         {isLoading ? (
           <Stack alignItems="center" sx={{ py: 8, gap: 2 }}>
@@ -107,11 +110,11 @@ export default function ReportsPage() {
                   <TableCell>{item.name}</TableCell>
                   <TableCell>{item.category.name}</TableCell>
                   <TableCell>
-                    <Chip size="small" color={item.type === 'INCOME' ? 'success' : 'error'} label={item.type === 'INCOME' ? 'Entrada' : 'Despesa'} />
+                    <TransactionTypeChip type={item.type} />
                   </TableCell>
                   {scope === 'family' ? <TableCell>{item.member ? `${item.member.firstName} ${item.member.lastName}` : '—'}</TableCell> : null}
                   <TableCell align="right">
-                    <Amount cents={item.amount} visible={valuesVisible} tone={item.type === 'INCOME' ? 'income' : 'expense'} />
+                    <Amount cents={item.amount} visible={valuesVisible} tone={transactionAmountTone(item.type)} />
                   </TableCell>
                 </TableRow>
               ))}
@@ -126,16 +129,19 @@ export default function ReportsPage() {
 function BoxCards({
   totalIncome,
   totalExpense,
+  totalInvestment,
   visible,
 }: {
   totalIncome: number;
   totalExpense: number;
+  totalInvestment: number;
   visible: boolean;
 }) {
   const result = totalIncome - totalExpense;
   const cards = [
     { label: 'Entradas filtradas', cents: totalIncome, tone: 'income' as const },
     { label: 'Despesas filtradas', cents: totalExpense, tone: 'expense' as const },
+    { label: 'Investimentos filtrados', cents: totalInvestment, tone: 'plain' as const },
     { label: 'Resultado filtrado', cents: result, tone: 'auto' as const },
   ];
 
@@ -143,7 +149,7 @@ function BoxCards({
     <Stack
       direction={{ xs: 'column', md: 'row' }}
       spacing={2}
-      sx={{ mb: 2.25 }}
+      sx={{ mb: 2.25, flexWrap: { md: 'wrap' } }}
     >
       {cards.map((card) => (
         <Paper key={card.label} sx={{ flex: 1, minHeight: 120, p: 2.75, border: '1px solid', borderColor: 'divider', borderRadius: 2, display: 'flex', flexDirection: 'column' }}>

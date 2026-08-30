@@ -8,6 +8,7 @@ dayjs.extend(utc);
 dayjs.locale('pt-br');
 
 export { dayjs };
+export type { Dayjs };
 
 export const DATE_FORMAT = 'DD/MM/YYYY';
 export const DATETIME_FORMAT = 'DD/MM/YYYY HH:mm:ss';
@@ -43,6 +44,16 @@ export function toApiDateTime(calendar: Dayjs, existing?: string | null) {
     .toISOString();
 }
 
+/** Exibição de data de calendário: DD/MM/YYYY. */
+export function formatDate(value?: string | Date | null) {
+  if (!value) return '—';
+
+  const raw = typeof value === 'string' ? value : value.toISOString();
+  const parsed = isCalendarDate(raw) ? dayjs(raw.slice(0, 10), API_DATE_FORMAT, true) : dayjs(raw);
+
+  return parsed.isValid() ? parsed.format(DATE_FORMAT) : '—';
+}
+
 /** Exibição canônica de datas no produto: DD/MM/YYYY HH:mm:ss. */
 export function formatDateTime(value?: string | Date | null) {
   if (!value) return '—';
@@ -56,6 +67,22 @@ export function formatDateTime(value?: string | Date | null) {
 export function currentPeriod() {
   const now = dayjs();
   return { month: now.month() + 1, year: now.year() };
+}
+
+export function isFuturePeriod(month: number, year: number, now = currentPeriod()) {
+  return year > now.year || (year === now.year && month > now.month);
+}
+
+export function clampPeriod(month: number, year: number, now = currentPeriod()) {
+  if (isFuturePeriod(month, year, now)) return now;
+  return { month, year };
+}
+
+export function yearOptions(disableFuture = false) {
+  const now = currentPeriod();
+  const start = now.year - 2;
+  const end = disableFuture ? now.year : now.year + 2;
+  return Array.from({ length: end - start + 1 }, (_, index) => start + index);
 }
 
 export const months = Array.from({ length: 12 }, (_, index) => {

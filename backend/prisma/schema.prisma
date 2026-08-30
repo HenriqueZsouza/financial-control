@@ -10,12 +10,21 @@ datasource db {
 enum TransactionType {
   INCOME
   EXPENSE
+  INVESTMENT
 }
 
 enum PaymentType {
   CASH
   CREDIT_1X
   INSTALLMENT
+}
+
+enum PayableSource {
+  CREDIT_CARD_INVOICE
+}
+
+enum PayableStatus {
+  PENDING
 }
 enum FamilyGroupStatus {
   ACTIVE
@@ -56,6 +65,7 @@ model User {
   updatedAt    DateTime      @updatedAt
   deletedAt    DateTime?
   transactions Transaction[]
+  payables     Payable[]
   memberships FamilyMembership[]
   invitesSent FamilyInvite[] @relation("inviter")
   invitesReceived FamilyInvite[] @relation("invitee")
@@ -146,14 +156,37 @@ model Transaction {
   installmentGroupId Int?
   installmentNumber  Int?
   date               DateTime
+  payableId          Int?
   createdAt          DateTime        @default(now())
   updatedAt          DateTime        @updatedAt
   deletedAt          DateTime?
   user               User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   category           Category        @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  payable            Payable?       @relation(fields: [payableId], references: [id], onDelete: Restrict)
 
   @@index([userId, date])
   @@index([userId, deletedAt])
   @@index([installmentGroupId])
+  @@index([payableId])
   @@map("transactions")
+}
+
+model Payable {
+  id           Int           @id @default(autoincrement())
+  userId       Int
+  name         String
+  amount       Int
+  dueDate      DateTime
+  source       PayableSource
+  status       PayableStatus @default(PENDING)
+  closedAt     DateTime
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  deletedAt    DateTime?
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@index([userId, dueDate])
+  @@index([userId, deletedAt])
+  @@map("payables")
 }

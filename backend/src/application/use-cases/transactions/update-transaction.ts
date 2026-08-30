@@ -24,6 +24,9 @@ export class UpdateTransactionUseCase implements UpdateTransaction {
   async execute(userId: number, id: number, input: UpdateTransactionInput) {
     const current = await this.transactions.findActiveById(userId, id);
     if (!current) throw notFound('Lançamento');
+    if (current.payableId && (input.amount !== undefined || input.paymentType !== undefined)) {
+      throw new DomainError('INVOICE_LOCKED', 'Este lançamento já faz parte de uma fatura fechada.');
+    }
     if (input.categoryId && !(await this.categories.exists(input.categoryId))) {
       throw new DomainError('INVALID_CATEGORY', 'A categoria informada não existe.');
     }

@@ -4,7 +4,6 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
-import Chip from '@mui/material/Chip';
 import CircularProgress from '@mui/material/CircularProgress';
 import IconButton from '@mui/material/IconButton';
 import MenuItem from '@mui/material/MenuItem';
@@ -26,11 +25,13 @@ import { ConfirmDialog } from '../../../components/ConfirmDialog';
 import { Empty } from '../../../components/Empty';
 import { PageHeader } from '../../../components/PageHeader';
 import { PeriodFilter } from '../../../components/PeriodFilter';
+import { TransactionTypeChip } from '../../../components/TransactionTypeChip';
 import { ApiError, services } from '../../../lib/api';
 import { useAuth } from '../../../lib/auth';
 import { currentPeriod, formatDateTime } from '../../../lib/dates';
 import { useFeedback } from '../../../lib/feedback';
 import { queryKeys } from '../../../lib/query-keys';
+import { transactionAmountSign, transactionAmountTone } from '../../../lib/transaction-ui';
 
 export default function TransactionsPage() {
   const [period, setPeriod] = useState(currentPeriod);
@@ -56,6 +57,8 @@ export default function TransactionsPage() {
       await Promise.all([
         client.invalidateQueries({ queryKey: ['transactions'] }),
         client.invalidateQueries({ queryKey: ['summary'] }),
+        client.invalidateQueries({ queryKey: ['report'] }),
+        client.invalidateQueries({ queryKey: ['credit-card'] }),
       ]);
       notify('Lançamento excluído.');
     },
@@ -83,6 +86,7 @@ export default function TransactionsPage() {
             <MenuItem value="">Todos</MenuItem>
             <MenuItem value="INCOME">Entradas</MenuItem>
             <MenuItem value="EXPENSE">Despesas</MenuItem>
+            <MenuItem value="INVESTMENT">Investimentos</MenuItem>
           </TextField>
         </Stack>
       </Paper>
@@ -120,18 +124,14 @@ export default function TransactionsPage() {
                   </TableCell>
                   <TableCell>{transaction.category.name}</TableCell>
                   <TableCell>
-                    <Chip
-                      size="small"
-                      color={transaction.type === 'INCOME' ? 'success' : 'error'}
-                      label={transaction.type === 'INCOME' ? 'Entrada' : 'Despesa'}
-                    />
+                    <TransactionTypeChip type={transaction.type} />
                   </TableCell>
                   <TableCell align="right">
                     <Amount
                       cents={transaction.amount}
                       visible={valuesVisible}
-                      tone={transaction.type === 'INCOME' ? 'income' : 'expense'}
-                      sign={transaction.type === 'INCOME' ? '+' : '−'}
+                      tone={transactionAmountTone(transaction.type)}
+                      sign={transactionAmountSign(transaction.type)}
                     />
                   </TableCell>
                   <TableCell align="right">
