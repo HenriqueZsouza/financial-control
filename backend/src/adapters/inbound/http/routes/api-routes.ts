@@ -10,6 +10,7 @@ import type { TransactionsController } from '../controllers/transactions-control
 import type { UsersController } from '../controllers/users-controller.js';
 import type { FamilyController } from '../controllers/family-controller.js';
 import type { NotificationsController } from '../controllers/notifications-controller.js';
+import type { TelegramIntegrationsController } from '../controllers/telegram-controller.js';
 
 export interface HttpControllers {
   auth: AuthController;
@@ -21,6 +22,7 @@ export interface HttpControllers {
   payables: PayableController;
   family: FamilyController;
   notifications: NotificationsController;
+  telegram: TelegramIntegrationsController;
 }
 
 export function apiRoutes(controllers: HttpControllers, tokens: TokenIssuer) {
@@ -58,6 +60,10 @@ export function apiRoutes(controllers: HttpControllers, tokens: TokenIssuer) {
   router.get('/notifications', protectedRoute, controllers.notifications.list);
   router.post('/notifications/:id/read', protectedRoute, controllers.notifications.read);
   router.post('/notifications/read-all', protectedRoute, controllers.notifications.readAll);
+
+  router.post('/integrations/telegram/link-token', protectedRoute, controllers.telegram.createLinkToken);
+  router.get('/integrations/telegram', protectedRoute, controllers.telegram.get);
+  router.delete('/integrations/telegram', protectedRoute, controllers.telegram.remove);
 
   return router;
 }

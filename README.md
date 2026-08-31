@@ -49,4 +49,4 @@ Abra `http://localhost:3000`. A API responde em `http://localhost:3333`; `GET /h
 - Lançamentos excluídos recebem `deletedAt`; não são removidos do banco.
 - Parcelamentos geram uma linha por mês, com a diferença de arredondamento na última parcela.
 
-Veja [arquitetura](docs/ARCHITECTURE.md), [contratos da API](docs/API.md) e [componentes](docs/components.md) para detalhes.
+Veja [arquitetura](docs/ARCHITECTURE.md), [contratos da API](docs/API.md), [guia local do Telegram](docs/TELEGRAM-LOCAL.md) e [componentes](docs/components.md) para detalhes.

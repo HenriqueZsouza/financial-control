@@ -59,6 +59,15 @@ export const openApiSchemas = {
       confirmPassword: { type: 'string', format: 'password' },
     },
   },
+  TelegramConnection: {
+    type: 'object', required: ['connectedAt'], properties: { username: { type: 'string', nullable: true, example: 'ana_silva' }, connectedAt: dateTime },
+  },
+  TelegramConnectionResponse: {
+    type: 'object', required: ['connection'], properties: { connection: { anyOf: [{ $ref: '#/components/schemas/TelegramConnection' }, { type: 'null' }] } },
+  },
+  TelegramLinkResponse: {
+    type: 'object', required: ['linkUrl', 'expiresAt'], properties: { linkUrl: { type: 'string', format: 'uri', example: 'https://t.me/FinancialControlBot?start=opaque-code' }, expiresAt: dateTime },
+  },
   Category: {
     type: 'object', required: ['id', 'name', 'slug', 'icon', 'createdAt', 'updatedAt'], properties: {
       id: { type: 'integer', minimum: 1, example: 1 }, name: { type: 'string', example: 'Alimentação' }, slug: { type: 'string', example: 'alimentacao' },

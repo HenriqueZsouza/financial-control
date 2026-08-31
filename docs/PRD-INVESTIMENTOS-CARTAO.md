@@ -49,7 +49,7 @@ Entregar, de ponta a ponta:
 - Escopo familiar (`scope=family`) no relatório de cartão — permanece pessoal, como a dashboard
 - Investimento como conta/posição (saldo acumulado de carteira, rentabilidade, resgate)
 - Exportação PDF/Excel
-- Telegram / Hermes Agent
+- Cadastro de lançamentos pelo Telegram
 - Contas a pagar (continua placeholder)
 - OAuth, 2FA, deploy
 

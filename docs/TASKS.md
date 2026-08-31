@@ -214,7 +214,7 @@ Tudo acima → T8.1 → T8.2 → T8.3
 
 ## Fora de escopo (não criar tasks na v1)
 
-- Telegram / Hermes Agent
+- Cadastro de lançamentos pelo Telegram
 - Deploy, CI/CD, HTTPS, backups
 - Conta familiar compartilhada
 - Cartão de crédito e contas a pagar completos (só placeholder)

@@ -1,6 +1,6 @@
-import { PaymentType as PrismaPaymentType, TransactionType as PrismaTransactionType } from '@prisma/client';
+import { PaymentType as PrismaPaymentType, TransactionSource as PrismaTransactionSource, TransactionType as PrismaTransactionType } from '@prisma/client';
 import type { TransactionRepository, CreateTransactionData, TransactionFilters, UpdateTransactionData } from '../../../application/ports/outbound/transaction-repository.js';
-import type { PaymentType, Transaction, TransactionType } from '../../../domain/transaction/transaction.js';
+import type { PaymentType, Transaction, TransactionSource, TransactionType } from '../../../domain/transaction/transaction.js';
 import { prisma } from './prisma-client.js';
 
 const toPrismaType = (type: TransactionType): PrismaTransactionType => {
@@ -24,11 +24,13 @@ const toPrismaPayment = (payment: PaymentType): PrismaPaymentType => {
       return PrismaPaymentType.INSTALLMENT;
   }
 };
+const toPrismaSource = (source: TransactionSource): PrismaTransactionSource => source === 'TELEGRAM' ? PrismaTransactionSource.TELEGRAM : PrismaTransactionSource.WEB;
 
 const mapCreate = (data: CreateTransactionData) => ({
   ...data,
   type: toPrismaType(data.type),
   paymentType: toPrismaPayment(data.paymentType),
+  source: toPrismaSource(data.source ?? 'WEB'),
 });
 
 const mapUpdate = (data: UpdateTransactionData) => ({

@@ -57,7 +57,7 @@ O **cadastro manual** de contas a pagar **não** entra nesta entrega; a tela de 
 - Escopo familiar (`scope=family`) na fatura e nas contas a pagar — permanece pessoal
 - A fatura fechada **não** gera um novo lançamento `EXPENSE` (as compras já foram lançadas)
 - Exportação PDF/Excel
-- Telegram / Hermes Agent
+- Cadastro de lançamentos pelo Telegram
 - OAuth, 2FA, deploy
 
 **Invariantes existentes (não negociáveis):** soft delete, valores em centavos (`Int`), parcelamento com resto na última parcela e avanço de meses em UTC, JWT Bearer, erros `{ code, message, details? }`, enums Prisma não vazam ao domínio, isolamento por `userId`.

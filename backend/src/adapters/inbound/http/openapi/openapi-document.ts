@@ -34,6 +34,13 @@ export const openApiDocument = {
     '/api/users/me': {
       patch: { tags: ['Users'], summary: 'Atualiza o perfil do usuário autenticado', security: bearerSecurity, requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/UpdateUserRequest' } } } }, responses: { '200': { description: 'Perfil atualizado', ...json('UserResponse') }, '400': error('Dados inválidos ou nenhuma alteração informada.', 'NO_CHANGES'), '401': error('Token ausente ou inválido.', 'UNAUTHENTICATED'), '404': error('Usuário não encontrado.', 'NOT_FOUND') } },
     },
+    '/api/integrations/telegram': {
+      get: { tags: ['Integrations'], summary: 'Obtém o estado do vínculo Telegram', security: bearerSecurity, responses: { '200': { description: 'Vínculo atual', ...json('TelegramConnectionResponse') }, '401': error('Token ausente ou inválido.', 'UNAUTHENTICATED') } },
+      delete: { tags: ['Integrations'], summary: 'Desvincula o Telegram', security: bearerSecurity, responses: { '204': { description: 'Vínculo revogado' }, '401': error('Token ausente ou inválido.', 'UNAUTHENTICATED') } },
+    },
+    '/api/integrations/telegram/link-token': {
+      post: { tags: ['Integrations'], summary: 'Gera link temporário para conectar o Telegram', security: bearerSecurity, responses: { '201': { description: 'Link de vínculo válido por 10 minutos', ...json('TelegramLinkResponse') }, '401': error('Token ausente ou inválido.', 'UNAUTHENTICATED'), '503': error('Integração Telegram desativada.', 'TELEGRAM_NOT_CONFIGURED') } },
+    },
     '/api/categories': {
       get: { tags: ['Categories'], summary: 'Lista as categorias disponíveis', security: bearerSecurity, responses: { '200': { description: 'Categorias', content: { 'application/json': { schema: { type: 'array', items: { $ref: '#/components/schemas/Category' } } } } }, '401': error('Token ausente ou inválido.', 'UNAUTHENTICATED') } },
     },

@@ -40,6 +40,8 @@ export class CreateTransactionUseCase implements CreateTransaction {
           installmentsCount: null,
           installmentGroupId: null,
           installmentNumber: null,
+          source: input.source ?? 'WEB',
+          externalReference: input.externalReference ?? null,
         }),
       ];
     }
@@ -52,6 +54,8 @@ export class CreateTransactionUseCase implements CreateTransaction {
       type: input.type,
       name: input.name,
       paymentType: 'INSTALLMENT',
+      source: input.source ?? 'WEB',
+      externalReference: input.externalReference ? `${input.externalReference}:${installment.installmentNumber}` : null,
       installmentsCount: count,
       installmentGroupId: groupId,
       ...installment,

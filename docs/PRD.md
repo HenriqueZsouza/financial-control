@@ -11,7 +11,7 @@
 
 O **Financial Control** é uma aplicação web para controle financeiro familiar. O usuário poderá registrar entradas e despesas, acompanhar saldo e relatórios mensais, e gerenciar seu perfil.
 
-Em uma fase futura, haverá integração com **Telegram** via **Hermes Agent**, permitindo cadastrar lançamentos por chat (ex.: *"compra de mercado R$150,00"*), que serão registrados automaticamente na conta do usuário.
+Há integração com **Telegram**, permitindo cadastrar lançamentos por chat (ex.: *"compra de mercado R$150,00"*) após confirmação explícita no bot.
 
 **Escopo deste PRD:** módulo web + API backend. A integração com Telegram **não faz parte da v1**.
 
@@ -128,7 +128,7 @@ financial-control/
 
 ### 5.2 Fora do escopo (v1)
 
-- Bot Telegram / Hermes Agent
+- Bot Telegram com interpretação determinística
 - Deploy em produção
 - Multi-usuário familiar compartilhado (conta conjunta) — spec em [`PRD-FAMILY-GROUP.md`](./PRD-FAMILY-GROUP.md)
 - Cartão de crédito completo (limite, vários cartões, fechamento automático) — relatório mensal 1x vs parcelas: [`PRD-INVESTIMENTOS-CARTAO.md`](./PRD-INVESTIMENTOS-CARTAO.md); fechamento **explícito** da fatura: [`PRD-FATURA-CONTAS-A-PAGAR.md`](./PRD-FATURA-CONTAS-A-PAGAR.md)
@@ -389,7 +389,7 @@ Documentos globais adicionais:
 | Fase | Entrega |
 |------|---------|
 | v1 | Web + API rodando **localmente** (este PRD) |
-| v2 | Integração Telegram via Hermes Agent |
+| v2 | Integração Telegram com parser determinístico |
 | v3 | Deploy produção, HTTPS, backups, monitoramento |
 | v4 | Grupo familiar (convites + relatório consolidado) — [`PRD-FAMILY-GROUP.md`](./PRD-FAMILY-GROUP.md); cartão (limite/vários cartões) e cadastro/pagamento de contas a pagar. Relatório mensal de cartão + investimento: [`PRD-INVESTIMENTOS-CARTAO.md`](./PRD-INVESTIMENTOS-CARTAO.md). Fechamento explícito de fatura + relatório de contas: [`PRD-FATURA-CONTAS-A-PAGAR.md`](./PRD-FATURA-CONTAS-A-PAGAR.md) |
 
@@ -402,5 +402,5 @@ Documentos globais adicionais:
 | Lançamento | Entrada, despesa ou investimento registrado pelo usuário |
 | Soft delete | Exclusão lógica via `deletedAt`, sem remover do banco |
 | Mês vigente | Mês/ano corrente no fuso do usuário/servidor |
-| Hermes Agent | Integração futura para bot Telegram |
+| Telegram Bot API | Canal de conversa para cadastro de lançamentos |
 | v1 local | Primeira versão executada apenas em ambiente de desenvolvimento local |

@@ -30,6 +30,9 @@ Para explorar o contrato completo e executar requests localmente, abra a [Swagge
 | GET | `/api/notifications` | `unreadOnly` opcional | `{ notifications: { items, unreadCount } }` |
 | POST | `/api/notifications/:id/read` | — | 204 |
 | POST | `/api/notifications/read-all` | — | 204 |
+| POST | `/api/integrations/telegram/link-token` | — | link temporário para conexão (201) |
+| GET | `/api/integrations/telegram` | — | estado do vínculo Telegram |
+| DELETE | `/api/integrations/telegram` | — | 204; revoga o vínculo e rascunhos pendentes |
 
 Exemplo de criação à vista (`date` aceita `AAAA-MM-DD` ou ISO 8601 com horário; o frontend envia ISO com o horário da operação):
 

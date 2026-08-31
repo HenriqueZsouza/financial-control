@@ -1,5 +1,6 @@
 export type TransactionType = 'INCOME' | 'EXPENSE' | 'INVESTMENT';
 export type PaymentType = 'CASH' | 'CREDIT_1X' | 'INSTALLMENT';
+export type TransactionSource = 'WEB' | 'TELEGRAM';
 
 export const isSinglePayment = (paymentType: PaymentType) => paymentType === 'CASH' || paymentType === 'CREDIT_1X';
 
@@ -20,6 +21,8 @@ export interface Transaction {
   installmentNumber: number | null;
   date: Date;
   payableId: number | null;
+  source?: TransactionSource;
+  externalReference?: string | null;
   createdAt: Date;
   updatedAt: Date;
   deletedAt: Date | null;

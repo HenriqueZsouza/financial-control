@@ -1,9 +1,9 @@
 import type { Period } from '../../../domain/shared/period.js';
-import type { PaymentType, Transaction, TransactionType } from '../../../domain/transaction/transaction.js';
+import type { PaymentType, Transaction, TransactionSource, TransactionType } from '../../../domain/transaction/transaction.js';
 
 export interface CreateTransactionData {
   userId: number; categoryId: number; type: TransactionType; name: string; amount: number; paymentType: PaymentType;
-  installmentsCount: number | null; installmentGroupId: number | null; installmentNumber: number | null; date: Date;
+  installmentsCount: number | null; installmentGroupId: number | null; installmentNumber: number | null; date: Date; source?: TransactionSource; externalReference?: string | null;
 }
 export interface TransactionFilters {
   period?: Period;

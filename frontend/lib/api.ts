@@ -9,6 +9,7 @@ import type {
   PayableList,
   Summary,
   Transaction,
+  TelegramConnection,
   User,
 } from './types';
 
@@ -63,6 +64,9 @@ export const services = {
   updateTransaction: (id: number | string, data: Record<string, unknown>) => api<{ transaction: Transaction }>(`/api/transactions/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   deleteTransaction: (id: number | string) => api<void>(`/api/transactions/${id}`, { method: 'DELETE' }),
   updateProfile: (data: Record<string, string>) => api<{ user: User }>('/api/users/me', { method: 'PATCH', body: JSON.stringify(data) }),
+  telegramConnection: () => api<{ connection: TelegramConnection | null }>('/api/integrations/telegram'),
+  createTelegramLink: () => api<{ linkUrl: string; expiresAt: string }>('/api/integrations/telegram/link-token', { method: 'POST' }),
+  removeTelegramConnection: () => api<void>('/api/integrations/telegram', { method: 'DELETE' }),
   family: () => api<{ group: FamilyGroup | null }>('/api/family'),
   inviteFamily: (email: string) => api<{ invite: FamilyInvite }>('/api/family/invites', { method: 'POST', body: JSON.stringify({ email }) }),
   receivedInvites: () => api<{ invites: FamilyInvite[] }>('/api/family/invites/received'),

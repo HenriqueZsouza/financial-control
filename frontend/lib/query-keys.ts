@@ -10,4 +10,5 @@ export const queryKeys = {
   family: ['family'] as const,
   familyInvites: ['family-invites'] as const,
   notifications: ['notifications'] as const,
+  telegramConnection: ['telegram-connection'] as const,
 };

@@ -45,7 +45,7 @@ Migrar `backend/` para **Arquitetura Hexagonal** (Ports & Adapters), com composi
 - Migração de schema Prisma / PostgreSQL
 - Deploy, CI/CD, observabilidade de produção
 - Troca de Express, Prisma, JWT ou bcrypt (apenas isolamento atrás de ports)
-- Telegram / Hermes Agent
+- Cadastro de lançamentos pelo Telegram
 - Novas features de produto
 
 **Invariantes de produto (não negociáveis):** isolamento por `userId`, soft delete, valores em centavos (`Int`), parcelamento com ajuste na última parcela, email único, senha com bcrypt, JWT Bearer, `{ code, message, details? }`.

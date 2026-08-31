@@ -117,3 +117,5 @@ export type PayableList = {
   count: number;
   items: Payable[];
 };
+
+export type TelegramConnection = { username?: string | null; connectedAt: string };
