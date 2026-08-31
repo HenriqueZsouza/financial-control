@@ -3,6 +3,10 @@ export type PaymentType = 'CASH' | 'CREDIT_1X' | 'INSTALLMENT';
 
 export const isSinglePayment = (paymentType: PaymentType) => paymentType === 'CASH' || paymentType === 'CREDIT_1X';
 
+/** Despesa em dinheiro: única que reduz saldo e entra em totalExpense / byCategory. */
+export const isCashExpense = (type: TransactionType, paymentType: PaymentType) =>
+  type === 'EXPENSE' && paymentType === 'CASH';
+
 export interface Transaction {
   id: number;
   userId: number;

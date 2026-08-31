@@ -279,7 +279,7 @@ financial-control/
 
 1. **Isolamento por usuário:** todo recurso financeiro pertence ao `userId` do token; nunca expor dados de outros usuários.
 2. **Soft delete:** queries padrão ignoram registros com `deletedAt` preenchido.
-3. **Saldo disponível:** o mês herda o saldo encerrado do anterior (`openingBalance` = entradas − despesas com data anterior ao período, positivo ou negativo). O saldo exibido é `openingBalance + entradas do mês − saídas do mês`. Investimentos não entram.
+3. **Saldo disponível:** o mês herda o saldo encerrado do anterior (`openingBalance` = entradas − despesas **à vista (`CASH`)** com data anterior ao período, positivo ou negativo). O saldo exibido é `openingBalance + entradas do mês − saídas à vista do mês`. Investimentos e compras no cartão (`CREDIT_1X`, `INSTALLMENT`) **não** entram.
 4. **Valores monetários:** armazenar em centavos (Int) ou `Decimal` no Prisma; padronizar em toda a API.
 5. **Categorias iniciais (seed):** mercado, farmácia, vestuário, estudos, moradia, transporte, lazer, saúde, educação, outros.
 6. **Privacidade (olho):** comportamento apenas no frontend/sessão; resetado a cada login; não persiste no backend na v1.

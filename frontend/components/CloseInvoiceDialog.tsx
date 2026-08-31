@@ -6,6 +6,7 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
+import Typography from '@mui/material/Typography';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { useState } from 'react';
 import { Amount } from './Amount';
@@ -38,15 +39,21 @@ export function CloseInvoiceDialog({
     >
       <DialogTitle>Fechar fatura</DialogTitle>
       <DialogContent>
-        <DialogContentText sx={{ mb: 2.5 }}>
-          A fatura em aberto de{' '}
-          <Amount
-            cents={amount}
-            visible={visible}
-            tone="expense"
-          />
-          {' '}vira uma conta a pagar na data de vencimento.
+        <DialogContentText sx={{ mb: 1.5 }}>
+          A fatura em aberto vira uma conta a pagar na data de vencimento.
         </DialogContentText>
+        <Typography
+          variant="overline"
+          display="block"
+        >
+          Total a fechar
+        </Typography>
+        <Amount
+          cents={amount}
+          visible={visible}
+          tone="expense"
+          sx={{ display: 'block', fontSize: 28, mb: 2.5 }}
+        />
         <DatePicker
           label="Vencimento"
           format={DATE_FORMAT}

@@ -283,7 +283,7 @@ Dado período inválido
 Então DomainError INVALID_PERIOD (400)
 
 Saldo = totalIncome − totalExpense do período, só do userId, deletedAt null
-byCategory: apenas EXPENSE, ordenado por total desc
+totalExpense e byCategory: apenas EXPENSE com paymentType CASH (crédito 1x e parcelado não entram)
 ```
 
 ### 7.5 HTTP (adapter inbound)

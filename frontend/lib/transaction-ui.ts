@@ -1,4 +1,4 @@
-import type { TransactionType } from './types';
+import type { PaymentType, TransactionType } from './types';
 
 export function transactionTypeLabel(type: TransactionType) {
   if (type === 'INCOME') return 'Entrada';
@@ -6,14 +6,24 @@ export function transactionTypeLabel(type: TransactionType) {
   return 'Despesa';
 }
 
-export function transactionAmountTone(type: TransactionType): 'income' | 'expense' | 'plain' {
+export function isCreditPayment(paymentType: PaymentType) {
+  return paymentType === 'CREDIT_1X' || paymentType === 'INSTALLMENT';
+}
+
+export function transactionAmountTone(
+  type: TransactionType,
+  paymentType?: PaymentType,
+): 'income' | 'expense' | 'plain' {
   if (type === 'INCOME') return 'income';
-  if (type === 'INVESTMENT') return 'plain';
+  if (type === 'INVESTMENT' || (paymentType && isCreditPayment(paymentType))) return 'plain';
   return 'expense';
 }
 
-export function transactionAmountSign(type: TransactionType): '+' | '−' | undefined {
+export function transactionAmountSign(
+  type: TransactionType,
+  paymentType?: PaymentType,
+): '+' | '−' | undefined {
   if (type === 'INCOME') return '+';
-  if (type === 'INVESTMENT') return undefined;
+  if (type === 'INVESTMENT' || (paymentType && isCreditPayment(paymentType))) return undefined;
   return '−';
 }

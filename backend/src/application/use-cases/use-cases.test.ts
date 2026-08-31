@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { DomainError } from '../../domain/shared/errors.js';
 import { periodOf } from '../../domain/shared/period.js';
-import { splitInstallments } from '../../domain/transaction/transaction.js';
+import { isCashExpense, splitInstallments } from '../../domain/transaction/transaction.js';
 import type { CategoryRepository } from '../ports/outbound/category-repository.js';
 import type { Clock, IdGenerator, PasswordHasher, TokenIssuer } from '../ports/outbound/security.js';
 import type { CloseInvoiceData, PayableRepository } from '../ports/outbound/payable-repository.js';
@@ -92,8 +92,31 @@ class Transactions implements TransactionRepository {
     this.deleted = true;
   }
 
-  async summary() {
-    return this.summaryResult;
+  async summary(userId: number, period?: Parameters<TransactionRepository['summary']>[1]) {
+    if (!this.items.length) return this.summaryResult;
+    const rows = this.items.filter((item) => !item.deletedAt && item.userId === userId);
+    const inPeriod = period
+      ? rows.filter((item) => item.date >= period.start && item.date < period.end)
+      : rows;
+    const prior = period ? rows.filter((item) => item.date < period.start) : [];
+    const sum = (list: typeof rows) => list.reduce((total, item) => total + item.amount, 0);
+    const cash = (list: typeof rows) => list.filter((item) => isCashExpense(item.type, item.paymentType));
+    const expenseRows = cash(inPeriod);
+    const byCategoryMap = new Map<number, number>();
+    for (const item of expenseRows) {
+      byCategoryMap.set(item.categoryId, (byCategoryMap.get(item.categoryId) ?? 0) + item.amount);
+    }
+    return {
+      totalIncome: sum(inPeriod.filter((item) => item.type === 'INCOME')),
+      totalExpense: sum(expenseRows),
+      totalInvestment: sum(inPeriod.filter((item) => item.type === 'INVESTMENT')),
+      openingBalance: sum(prior.filter((item) => item.type === 'INCOME')) - sum(cash(prior)),
+      byCategory: [...byCategoryMap.entries()].map(([categoryId, total]) => ({
+        categoryId,
+        name: 'Mercado',
+        total,
+      })),
+    };
   }
 
   async listOpenCreditCard(userId: number, now: Date) {
@@ -309,6 +332,26 @@ test('relatório de cartão agrupa 1x e parcelas, ignora cash, outro usuário e 
   assert.deepEqual(current.period, { month: 8, year: 2026 });
 });
 
+test('despesa no cartão não entra em totalExpense nem reduz o saldo', async () => {
+  const repo = new Transactions();
+  const august = new Date('2026-08-10T12:00:00.000Z');
+  const stamp = { createdAt: fixedClock.now(), updatedAt: fixedClock.now(), deletedAt: null as Date | null, payableId: null as number | null };
+  repo.items = [
+    { id: 1, userId: 1, categoryId: 1, type: 'EXPENSE', name: 'Mercado', amount: 1800, paymentType: 'CASH', installmentsCount: null, installmentGroupId: null, installmentNumber: null, date: august, ...stamp },
+    { id: 2, userId: 1, categoryId: 1, type: 'EXPENSE', name: 'Restaurante', amount: 8500, paymentType: 'CREDIT_1X', installmentsCount: null, installmentGroupId: null, installmentNumber: null, date: august, ...stamp },
+    { id: 3, userId: 1, categoryId: 1, type: 'EXPENSE', name: 'Parcela', amount: 30000, paymentType: 'INSTALLMENT', installmentsCount: 12, installmentGroupId: 1, installmentNumber: 2, date: august, ...stamp },
+    { id: 4, userId: 1, categoryId: 1, type: 'INCOME', name: 'Salário', amount: 5000, paymentType: 'CASH', installmentsCount: null, installmentGroupId: null, installmentNumber: null, date: august, ...stamp },
+  ];
+  const summary = await new GetDashboardSummaryUseCase(repo, fixedClock).execute(1, periodOf(8, 2026));
+  assert.equal(isCashExpense('EXPENSE', 'CASH'), true);
+  assert.equal(isCashExpense('EXPENSE', 'CREDIT_1X'), false);
+  assert.equal(isCashExpense('EXPENSE', 'INSTALLMENT'), false);
+  assert.equal(summary.totalIncome, 5000);
+  assert.equal(summary.totalExpense, 1800);
+  assert.equal(summary.balance, 3200);
+  assert.deepEqual(summary.byCategory, [{ categoryId: 1, name: 'Mercado', total: 1800 }]);
+});
+
 test('fatura em aberto ignora cash, futuro, fechado, outro usuário e soft delete', async () => {
   const repo = new Transactions();
   const now = fixedClock.now();
@@ -358,8 +401,8 @@ test('fechar fatura cria conta a pagar, esvazia aberto e não muda o saldo', asy
   const after = await new GetOpenCreditCardInvoiceUseCase(repo, fixedClock).execute(1);
   assert.equal(after.total, 0);
   const summary = await new GetDashboardSummaryUseCase(repo, fixedClock).execute(1);
-  assert.equal(summary.totalExpense, 38500);
-  assert.equal(summary.balance, -33500);
+  assert.equal(summary.totalExpense, 0);
+  assert.equal(summary.balance, 0);
   await expectsDomainError(() => close.execute(1, { dueDate: new Date('2026-09-10T00:00:00.000Z') }), 'EMPTY_OPEN_INVOICE');
 
   const laterClock: Clock = { now: () => new Date('2026-09-13T12:34:56.000Z') };

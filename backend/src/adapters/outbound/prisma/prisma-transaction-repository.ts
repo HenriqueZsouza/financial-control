@@ -91,13 +91,17 @@ export class PrismaTransactionRepository implements TransactionRepository {
   async summary(userId: number, period: TransactionFilters['period']) {
     const where = { userId, deletedAt: null, date: { gte: period!.start, lt: period!.end } };
     const prior = { userId, deletedAt: null, date: { lt: period!.start } };
+    const cashExpense = {
+      type: PrismaTransactionType.EXPENSE,
+      paymentType: PrismaPaymentType.CASH,
+    };
     const [incomes, expenses, investments, groups, priorIncomes, priorExpenses] = await Promise.all([
       prisma.transaction.aggregate({
         where: { ...where, type: PrismaTransactionType.INCOME },
         _sum: { amount: true },
       }),
       prisma.transaction.aggregate({
-        where: { ...where, type: PrismaTransactionType.EXPENSE },
+        where: { ...where, ...cashExpense },
         _sum: { amount: true },
       }),
       prisma.transaction.aggregate({
@@ -106,7 +110,7 @@ export class PrismaTransactionRepository implements TransactionRepository {
       }),
       prisma.transaction.groupBy({
         by: ['categoryId'],
-        where: { ...where, type: PrismaTransactionType.EXPENSE },
+        where: { ...where, ...cashExpense },
         _sum: { amount: true },
         orderBy: { _sum: { amount: 'desc' } },
       }),
@@ -115,7 +119,7 @@ export class PrismaTransactionRepository implements TransactionRepository {
         _sum: { amount: true },
       }),
       prisma.transaction.aggregate({
-        where: { ...prior, type: PrismaTransactionType.EXPENSE },
+        where: { ...prior, ...cashExpense },
         _sum: { amount: true },
       }),
     ]);

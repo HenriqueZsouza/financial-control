@@ -116,7 +116,11 @@ export default function TransactionsPage() {
                   <TableCell>{formatDateTime(transaction.date)}</TableCell>
                   <TableCell>
                     {transaction.name}
-                    {transaction.installmentsCount ? (
+                    {transaction.paymentType === 'CREDIT_1X' ? (
+                      <Typography variant="caption" display="block" color="text.secondary">
+                        Crédito à vista (1x)
+                      </Typography>
+                    ) : transaction.installmentsCount ? (
                       <Typography variant="caption" display="block" color="text.secondary">
                         Parcela {transaction.installmentNumber}/{transaction.installmentsCount}
                       </Typography>
@@ -130,8 +134,8 @@ export default function TransactionsPage() {
                     <Amount
                       cents={transaction.amount}
                       visible={valuesVisible}
-                      tone={transactionAmountTone(transaction.type)}
-                      sign={transactionAmountSign(transaction.type)}
+                      tone={transactionAmountTone(transaction.type, transaction.paymentType)}
+                      sign={transactionAmountSign(transaction.type, transaction.paymentType)}
                     />
                   </TableCell>
                   <TableCell align="right">

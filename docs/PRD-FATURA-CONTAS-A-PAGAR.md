@@ -112,7 +112,7 @@ O **cadastro manual** de contas a pagar **não** entra nesta entrega; a tela de 
 1. O valor da conta a pagar **não é recalculado**.
 2. Soft delete ou alteração de valor de lançamento **já vinculado** a uma fatura fechada: **proibido** (`INVOICE_LOCKED`, 422). Nome/categoria/tipo seguem as regras atuais de `PATCH`, desde que não mudem `amount` nem `paymentType`.
 3. Novos lançamentos de cartão nascem com `payableId = null` (fatura em aberto).
-4. **Não** criar `EXPENSE` extra no fechamento. Saldo, `totalExpense` e gráficos da home **não mudam** por causa do close. A conta a pagar é obrigação, não despesa nova.
+4. **Não** criar `EXPENSE` extra no fechamento e **não** alterar saldo: compras no cartão já não entram em `totalExpense`. A conta a pagar é obrigação, não despesa de caixa.
 
 ### 5.5 Relatório de contas a pagar
 

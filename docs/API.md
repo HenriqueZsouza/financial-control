@@ -38,11 +38,11 @@ Exemplo de criação à vista (`date` aceita `AAAA-MM-DD` ou ISO 8601 com horár
 ```
 
 Com `AAAA-MM-DD` apenas, a API aplica o horário atual do servidor no dia informado.
-Para crédito à vista (1x), use `paymentType: "CREDIT_1X"` — um único lançamento, sem grupo de parcelas.
+Para crédito à vista (1x), use `paymentType: "CREDIT_1X"` — um único lançamento, sem grupo de parcelas. Compras `CREDIT_1X` e `INSTALLMENT` **não** entram em `totalExpense`, `openingBalance` nem no `balance`; elas só aparecem no cartão de crédito (relatório e fatura em aberto).
 
 Para investir, use `"type": "INVESTMENT"`. Investimentos não entram em `totalExpense` nem no `balance` do dashboard.
 
-`balance` do dashboard é `openingBalance + totalIncome − totalExpense`. `openingBalance` é o saldo encerrado do mês anterior (entradas − despesas com `date` anterior ao início do período), positivo ou negativo.
+`balance` do dashboard é `openingBalance + totalIncome − totalExpense`. `totalExpense` soma só despesas **à vista (`CASH`)**. `openingBalance` é o saldo encerrado do mês anterior (entradas − despesas à vista com `date` anterior ao início do período), positivo ou negativo.
 
 Para parcelar, envie `paymentType: "INSTALLMENT"` e `installmentsCount`. A API distribui as parcelas mensalmente.
 

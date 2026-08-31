@@ -49,7 +49,9 @@ export default function ReportsPage() {
     const items = data?.transactions ?? [];
     return {
       totalIncome: items.filter((item) => item.type === 'INCOME').reduce((sum, item) => sum + item.amount, 0),
-      totalExpense: items.filter((item) => item.type === 'EXPENSE').reduce((sum, item) => sum + item.amount, 0),
+      totalExpense: items
+        .filter((item) => item.type === 'EXPENSE' && item.paymentType === 'CASH')
+        .reduce((sum, item) => sum + item.amount, 0),
       totalInvestment: items.filter((item) => item.type === 'INVESTMENT').reduce((sum, item) => sum + item.amount, 0),
     };
   }, [data]);
@@ -107,14 +109,25 @@ export default function ReportsPage() {
               {data.transactions.map((item) => (
                 <TableRow key={item.id} hover>
                   <TableCell>{formatDateTime(item.date)}</TableCell>
-                  <TableCell>{item.name}</TableCell>
+                  <TableCell>
+                    {item.name}
+                    {item.paymentType === 'CREDIT_1X' ? (
+                      <Typography variant="caption" display="block" color="text.secondary">
+                        Crédito à vista (1x)
+                      </Typography>
+                    ) : item.installmentsCount ? (
+                      <Typography variant="caption" display="block" color="text.secondary">
+                        Parcela {item.installmentNumber}/{item.installmentsCount}
+                      </Typography>
+                    ) : null}
+                  </TableCell>
                   <TableCell>{item.category.name}</TableCell>
                   <TableCell>
                     <TransactionTypeChip type={item.type} />
                   </TableCell>
                   {scope === 'family' ? <TableCell>{item.member ? `${item.member.firstName} ${item.member.lastName}` : '—'}</TableCell> : null}
                   <TableCell align="right">
-                    <Amount cents={item.amount} visible={valuesVisible} tone={transactionAmountTone(item.type)} />
+                    <Amount cents={item.amount} visible={valuesVisible} tone={transactionAmountTone(item.type, item.paymentType)} />
                   </TableCell>
                 </TableRow>
               ))}

@@ -76,8 +76,8 @@ Entregar, de ponta a ponta:
 
 1. **Enum:** `TransactionType` passa a ser `INCOME | EXPENSE | INVESTMENT` no domínio, no Prisma (mapeado no adapter) e no contrato HTTP.
 2. **Mesmas regras de pagamento:** `CASH`, `CREDIT_1X` e `INSTALLMENT` continuam válidos para investimento. Parcelamento e crédito 1x seguem as regras atuais (`isSinglePayment`, `splitInstallments`, resto na última parcela).
-3. **Saldo e dashboard:** `totalExpense` soma **somente** `EXPENSE`. `totalInvestment` soma `INVESTMENT`. `openingBalance` é o saldo encerrado até o mês anterior. `balance = openingBalance + totalIncome − totalExpense`. Investimento **não** reduz o saldo e **não** entra no gráfico de gastos por categoria (`byCategory` permanece só `EXPENSE`).
-4. **Relatório geral:** o filtro `type` aceita `INVESTMENT`. Os cards passam a exibir também o total de investimentos filtrados. O “resultado filtrado” permanece `entradas − despesas` (investimentos não entram nessa conta).
+3. **Saldo e dashboard:** `totalExpense` soma **somente** `EXPENSE` com `paymentType=CASH`. `CREDIT_1X` e `INSTALLMENT` não reduzem o saldo e não entram no gráfico de gastos (`byCategory`). `totalInvestment` soma `INVESTMENT`. `openingBalance` é o saldo encerrado até o mês anterior (entradas − despesas à vista). `balance = openingBalance + totalIncome − totalExpense`.
+4. **Relatório geral:** o filtro `type` aceita `INVESTMENT`. Os cards passam a exibir também o total de investimentos filtrados. O “resultado filtrado” permanece `entradas − despesas à vista` (investimentos e compras no cartão não entram nessa conta).
 5. **Listagem `/lancamentos`:** o filtro de tipo inclui Investimentos. Chip e rótulo próprios; valor com `Amount` em tom `plain` (tinta), sem verde/vermelho — investimento não é entrada nem despesa.
 6. **Categoria:** o usuário escolhe qualquer categoria existente. O seed ganha **Investimentos** (`slug: investimentos`) como opção natural; não é obrigatório usá-la.
 7. **Atualização:** `PATCH` pode alterar `type` para/de `INVESTMENT` nas mesmas restrições atuais (parcela não altera valor nem `paymentType`).
@@ -130,8 +130,8 @@ Entregar, de ponta a ponta:
 **Critérios de aceite:**
 - [ ] `/lancamentos`: filtro de tipo inclui Investimentos; chip e `Amount` `plain`
 - [ ] Dashboard: indicador “Investimentos do período” com `totalInvestment`
-- [ ] Saldo disponível e total de saídas **não** incluem investimentos
-- [ ] Gráfico de gastos por categoria permanece só despesas
+- [ ] Saldo disponível e total de saídas **não** incluem investimentos nem compras no cartão
+- [ ] Gráfico de gastos por categoria permanece só despesas à vista (`CASH`)
 
 ### US-CC-01 — Relatório mensal do cartão
 
