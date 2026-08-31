@@ -8,9 +8,14 @@
 | `lib/dates.ts` | dayjs pt-BR; exibição `DD/MM/YYYY HH:mm:ss` | data inválida → `—` |
 | `lib/feedback.tsx` | Snackbar global de sucesso/erro/aviso | aberto / fechado |
 | `AppShell` | Drawer, topbar, guarda de autenticação | loading, mobile menu |
-| `TransactionForm` | Criar e editar lançamentos; reais → centavos; DatePicker | categorias carregando, erro, salvando |
-| `DashboardCharts` | Gráficos Chart.js (import dinâmico) | vazio para despesas |
-| `PeriodFilter` | Seleção reutilizável de mês/ano (MUI Select) | período corrente |
+| `TransactionForm` | Criar e editar lançamentos (entrada, despesa, investimento); reais → centavos; DatePicker | categorias carregando, erro, salvando |
+| `TransactionTypeChip` | Rótulo do tipo: Entrada, Despesa, Investimento | — |
+| `DashboardCharts` | Gráficos Chart.js (import dinâmico); saídas só despesas | vazio para despesas |
+| Página `/cartao-credito` | Relatório mensal 1x vs parcelas (`GET /api/credit-card/report`) | loading, erro, vazio |
+| `OpenInvoiceCard` | Card da home com fatura em aberto e ação de fechar | loading, erro, vazio (total 0), botão disabled |
+| `CloseInvoiceDialog` | Modal de vencimento + confirmação do fechamento da fatura | aberto, pendente, DatePicker |
+| Página `/contas-a-pagar` | Relatório de contas a pagar por mês de vencimento | loading, erro, vazio |
+| `PeriodFilter` | Seleção reutilizável de mês/ano (MUI Select); `disableFuture` no relatório geral | período corrente |
 | `ConfirmDialog` | Confirmação destrutiva (MUI Dialog) | aberto, pendente |
 | `Amount` | Valor em BRL com blur de privacidade | visível / oculto |
 

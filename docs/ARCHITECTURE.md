@@ -16,6 +16,7 @@ adapters (HTTP, Prisma, bcrypt, JWT) → application (use cases e ports) → dom
 - **Application** declara ports e implementa casos de uso. Ela recebe repositórios, segurança, relógio e gerador de IDs por injeção.
 - **Adapters inbound** traduzem HTTP: Express, rotas, controllers finos, DTOs Zod, autenticação e apresentação de erros. A documentação OpenAPI/Swagger centralizada também vive em `adapters/inbound/http/openapi/`.
 - **Adapters outbound** implementam os ports por Prisma, bcrypt, JWT, relógio e IDs sequenciais. Enums Prisma são mapeados nesta borda.
+- A integração Telegram usa o adapter HTTP para webhook e ports próprios para conversa, Bot API e interpretação. Ela chama o mesmo caso de uso de criação de transações; origem e referência externa ficam internas ao adapter HTTP.
 - **`backend/src/main.ts`** é o composition root: é o único lugar que instancia adaptadores e os conecta aos casos de uso.
 
 O contrato HTTP em [API.md](./API.md) permanece o mesmo; HTTP é apenas o adapter inbound. Prisma continua sendo o único acesso ao PostgreSQL, e valores monetários seguem sendo `Int` em centavos.

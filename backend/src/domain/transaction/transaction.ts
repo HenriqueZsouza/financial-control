@@ -1,7 +1,12 @@
-export type TransactionType = 'INCOME' | 'EXPENSE';
+export type TransactionType = 'INCOME' | 'EXPENSE' | 'INVESTMENT';
 export type PaymentType = 'CASH' | 'CREDIT_1X' | 'INSTALLMENT';
+export type TransactionSource = 'WEB' | 'TELEGRAM';
 
 export const isSinglePayment = (paymentType: PaymentType) => paymentType === 'CASH' || paymentType === 'CREDIT_1X';
+
+/** Despesa em dinheiro: única que reduz saldo e entra em totalExpense / byCategory. */
+export const isCashExpense = (type: TransactionType, paymentType: PaymentType) =>
+  type === 'EXPENSE' && paymentType === 'CASH';
 
 export interface Transaction {
   id: number;
@@ -15,6 +20,9 @@ export interface Transaction {
   installmentGroupId: number | null;
   installmentNumber: number | null;
   date: Date;
+  payableId: number | null;
+  source?: TransactionSource;
+  externalReference?: string | null;
   createdAt: Date;
   updatedAt: Date;
   deletedAt: Date | null;
@@ -30,6 +38,14 @@ export function splitInstallments(amount: number, count: number, date: Date): In
   return Array.from({ length: count }, (_, index) => ({
     amount: index === count - 1 ? base + remainder : base,
     installmentNumber: index + 1,
-    date: new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + index, date.getUTCDate())),
+    date: new Date(Date.UTC(
+      date.getUTCFullYear(),
+      date.getUTCMonth() + index,
+      date.getUTCDate(),
+      date.getUTCHours(),
+      date.getUTCMinutes(),
+      date.getUTCSeconds(),
+      date.getUTCMilliseconds(),
+    )),
   }));
 }

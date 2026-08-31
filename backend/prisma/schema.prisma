@@ -10,12 +10,39 @@ datasource db {
 enum TransactionType {
   INCOME
   EXPENSE
+  INVESTMENT
 }
 
 enum PaymentType {
   CASH
   CREDIT_1X
   INSTALLMENT
+}
+
+enum TransactionSource {
+  WEB
+  TELEGRAM
+}
+
+enum TelegramConversationState {
+  IDLE
+  COLLECTING
+  AWAITING_CONFIRMATION
+}
+
+enum TelegramWebhookUpdateStatus {
+  PROCESSING
+  PROCESSED
+  IGNORED
+  FAILED
+}
+
+enum PayableSource {
+  CREDIT_CARD_INVOICE
+}
+
+enum PayableStatus {
+  PENDING
 }
 enum FamilyGroupStatus {
   ACTIVE
@@ -56,10 +83,13 @@ model User {
   updatedAt    DateTime      @updatedAt
   deletedAt    DateTime?
   transactions Transaction[]
+  payables     Payable[]
   memberships FamilyMembership[]
   invitesSent FamilyInvite[] @relation("inviter")
   invitesReceived FamilyInvite[] @relation("invitee")
   notifications Notification[]
+  telegramConnections TelegramConnection[]
+  telegramLinkTokens TelegramLinkToken[]
 
   @@map("users")
 }
@@ -146,14 +176,95 @@ model Transaction {
   installmentGroupId Int?
   installmentNumber  Int?
   date               DateTime
+  payableId          Int?
+  source             TransactionSource @default(WEB)
+  externalReference  String?           @unique
   createdAt          DateTime        @default(now())
   updatedAt          DateTime        @updatedAt
   deletedAt          DateTime?
   user               User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   category           Category        @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  payable            Payable?       @relation(fields: [payableId], references: [id], onDelete: Restrict)
 
   @@index([userId, date])
   @@index([userId, deletedAt])
   @@index([installmentGroupId])
+  @@index([payableId])
   @@map("transactions")
+}
+
+model TelegramConnection {
+  id             Int       @id @default(autoincrement())
+  userId         Int
+  telegramUserId String
+  chatId         String
+  username       String?
+  firstName      String?
+  connectedAt    DateTime
+  revokedAt      DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversation   TelegramConversation?
+
+  @@index([userId])
+  @@index([telegramUserId])
+  @@map("telegram_connections")
+}
+
+model TelegramLinkToken {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+  @@map("telegram_link_tokens")
+}
+
+model TelegramConversation {
+  id           Int                       @id @default(autoincrement())
+  connectionId Int                       @unique
+  state        TelegramConversationState @default(IDLE)
+  draft        Json?
+  expiresAt    DateTime?
+  lastUpdateId BigInt?
+  createdAt    DateTime                  @default(now())
+  updatedAt    DateTime                  @updatedAt
+  connection   TelegramConnection        @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@map("telegram_conversations")
+}
+
+model TelegramWebhookUpdate {
+  updateId    BigInt                      @id
+  receivedAt  DateTime                    @default(now())
+  processedAt DateTime?
+  status      TelegramWebhookUpdateStatus @default(PROCESSING)
+  errorCode   String?
+
+  @@map("telegram_webhook_updates")
+}
+
+model Payable {
+  id           Int           @id @default(autoincrement())
+  userId       Int
+  name         String
+  amount       Int
+  dueDate      DateTime
+  source       PayableSource
+  status       PayableStatus @default(PENDING)
+  closedAt     DateTime
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  deletedAt    DateTime?
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@index([userId, dueDate])
+  @@index([userId, deletedAt])
+  @@map("payables")
 }

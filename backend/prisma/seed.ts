@@ -6,6 +6,7 @@ const categories = [
   ['Mercado', 'mercado'], ['Farmácia', 'farmacia'], ['Vestuário', 'vestuario'],
   ['Estudos', 'estudos'], ['Moradia', 'moradia'], ['Transporte', 'transporte'],
   ['Lazer', 'lazer'], ['Saúde', 'saude'], ['Educação', 'educacao'], ['Outros', 'outros'],
+  ['Investimentos', 'investimentos'],
 ] as const;
 
 async function main() {

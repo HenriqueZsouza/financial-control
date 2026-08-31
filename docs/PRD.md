@@ -11,9 +11,15 @@
 
 O **Financial Control** é uma aplicação web para controle financeiro familiar. O usuário poderá registrar entradas e despesas, acompanhar saldo e relatórios mensais, e gerenciar seu perfil.
 
-Em uma fase futura, haverá integração com **Telegram** via **Hermes Agent**, permitindo cadastrar lançamentos por chat (ex.: *"compra de mercado R$150,00"*), que serão registrados automaticamente na conta do usuário.
+Há integração com **Telegram**, permitindo cadastrar lançamentos por chat (ex.: *"compra de mercado R$150,00"*) após confirmação explícita no bot.
 
 **Escopo deste PRD:** módulo web + API backend. A integração com Telegram **não faz parte da v1**.
+
+Specs incrementais (implementação segue o documento da feature, não este arquivo sozinho):
+
+- Grupo familiar: [`PRD-FAMILY-GROUP.md`](./PRD-FAMILY-GROUP.md)
+- Investimentos + relatório mensal de cartão: [`PRD-INVESTIMENTOS-CARTAO.md`](./PRD-INVESTIMENTOS-CARTAO.md)
+- Fechamento de fatura + relatório de contas a pagar: [`PRD-FATURA-CONTAS-A-PAGAR.md`](./PRD-FATURA-CONTAS-A-PAGAR.md)
 
 ---
 
@@ -122,11 +128,11 @@ financial-control/
 
 ### 5.2 Fora do escopo (v1)
 
-- Bot Telegram / Hermes Agent
+- Bot Telegram com interpretação determinística
 - Deploy em produção
 - Multi-usuário familiar compartilhado (conta conjunta) — spec em [`PRD-FAMILY-GROUP.md`](./PRD-FAMILY-GROUP.md)
-- Cartão de crédito completo (apenas placeholder de rota)
-- Contas a pagar completo (apenas placeholder de rota)
+- Cartão de crédito completo (limite, vários cartões, fechamento automático) — relatório mensal 1x vs parcelas: [`PRD-INVESTIMENTOS-CARTAO.md`](./PRD-INVESTIMENTOS-CARTAO.md); fechamento **explícito** da fatura: [`PRD-FATURA-CONTAS-A-PAGAR.md`](./PRD-FATURA-CONTAS-A-PAGAR.md)
+- Cadastro manual e pagamento de contas a pagar — o **relatório por vencimento** (alimentado pelo fechamento da fatura) está em [`PRD-FATURA-CONTAS-A-PAGAR.md`](./PRD-FATURA-CONTAS-A-PAGAR.md)
 - OAuth social, 2FA, notificações push
 - Exportação de relatórios (PDF/Excel)
 
@@ -175,12 +181,16 @@ financial-control/
 - Saldo disponível (com ícone olho para mostrar/ocultar)
 - Total de entradas (mês vigente)
 - Total de saídas (mês vigente)
+- Investimentos do período (não entram no saldo) — [`PRD-INVESTIMENTOS-CARTAO.md`](./PRD-INVESTIMENTOS-CARTAO.md)
 - Gráficos (ex.: entradas vs saídas; gastos por categoria)
+- Card de cartão de crédito com fatura em aberto e ação **Fechar fatura** — [`PRD-FATURA-CONTAS-A-PAGAR.md`](./PRD-FATURA-CONTAS-A-PAGAR.md)
 - Filtro por mês/ano (padrão: mês atual)
+- Saldo anterior herdado do mês encerrado
 
 **Critérios de aceite:**
 - [ ] Layout estilo “home de banco” (cards + gráficos)
 - [ ] Filtro altera todos os indicadores do período
+- [ ] Saldo disponível herda o encerramento do mês anterior (positivo ou negativo)
 - [ ] Privacidade: valores ocultos por padrão após login
 - [ ] Dados restritos ao usuário logado
 
@@ -194,8 +204,8 @@ financial-control/
 - Início / Dashboard
 - Cadastrar entrada/despesa
 - Relatório geral
-- Cartão de crédito *(placeholder)*
-- Contas a pagar *(placeholder)*
+- Cartão de crédito — relatório mensal ([`PRD-INVESTIMENTOS-CARTAO.md`](./PRD-INVESTIMENTOS-CARTAO.md))
+- Contas a pagar — relatório por vencimento ([`PRD-FATURA-CONTAS-A-PAGAR.md`](./PRD-FATURA-CONTAS-A-PAGAR.md)); cadastro manual ainda fora
 
 **Critérios de aceite:**
 - [ ] Menu visível em layout autenticado
@@ -211,7 +221,7 @@ financial-control/
 **Campos:**
 | Campo            | Tipo / opções                          |
 |------------------|----------------------------------------|
-| Tipo             | Entrada (`INCOME`) ou Despesa (`EXPENSE`) |
+| Tipo             | Entrada (`INCOME`), Despesa (`EXPENSE`) ou Investimento (`INVESTMENT`) — spec em [`PRD-INVESTIMENTOS-CARTAO.md`](./PRD-INVESTIMENTOS-CARTAO.md) |
 | Nome             | Texto                                  |
 | Valor total      | Monetário                              |
 | Categoria        | Select (mercado, farmácia, etc.)       |
@@ -233,12 +243,13 @@ financial-control/
 **Como** usuário, **quero** filtrar lançamentos por categorias e período **para** analisar meus gastos.
 
 **Filtros:**
-- Mês/ano
+- Mês/ano (sem meses futuros)
 - Categorias (multi-select)
-- Tipo (entrada/despesa) — opcional
+- Tipo (entrada / despesa / investimento) — opcional; spec do tipo investimento em [`PRD-INVESTIMENTOS-CARTAO.md`](./PRD-INVESTIMENTOS-CARTAO.md)
 
 **Critérios de aceite:**
 - [ ] Listagem/agregação conforme filtros
+- [ ] Filtro de período não oferece mês/ano futuros
 - [ ] Apenas dados do usuário logado
 - [ ] Exclui registros com soft delete
 
@@ -268,7 +279,7 @@ financial-control/
 
 1. **Isolamento por usuário:** todo recurso financeiro pertence ao `userId` do token; nunca expor dados de outros usuários.
 2. **Soft delete:** queries padrão ignoram registros com `deletedAt` preenchido.
-3. **Saldo do período (v1):** saldo exibido = entradas do mês − saídas do mês (período filtrado), não saldo acumulado histórico.
+3. **Saldo disponível:** o mês herda o saldo encerrado do anterior (`openingBalance` = entradas − despesas **à vista (`CASH`)** com data anterior ao período, positivo ou negativo). O saldo exibido é `openingBalance + entradas do mês − saídas à vista do mês`. Investimentos e compras no cartão (`CREDIT_1X`, `INSTALLMENT`) **não** entram.
 4. **Valores monetários:** armazenar em centavos (Int) ou `Decimal` no Prisma; padronizar em toda a API.
 5. **Categorias iniciais (seed):** mercado, farmácia, vestuário, estudos, moradia, transporte, lazer, saúde, educação, outros.
 6. **Privacidade (olho):** comportamento apenas no frontend/sessão; resetado a cada login; não persiste no backend na v1.
@@ -289,7 +300,7 @@ financial-control/
 
 ### Transaction
 - `id`, `userId`, `categoryId` (inteiros sequenciais)
-- `type`: `INCOME` | `EXPENSE`
+- `type`: `INCOME` | `EXPENSE` | `INVESTMENT` (investimento: [`PRD-INVESTIMENTOS-CARTAO.md`](./PRD-INVESTIMENTOS-CARTAO.md))
 - `name`, `amount`
 - `paymentType`: `CASH` | `INSTALLMENT`
 - `installmentsCount?`, `installmentGroupId?`, `installmentNumber?`
@@ -329,8 +340,8 @@ Respostas de erro padronizadas: `{ code, message, details? }`.
 | `/lancamentos/novo` | Sim | Novo lançamento |
 | `/relatorios` | Sim | Relatório geral |
 | `/perfil` | Sim | Edição de perfil |
-| `/cartao-credito` | Sim | Placeholder |
-| `/contas-a-pagar` | Sim | Placeholder |
+| `/cartao-credito` | Sim | Relatório mensal 1x vs parcelas — [`PRD-INVESTIMENTOS-CARTAO.md`](./PRD-INVESTIMENTOS-CARTAO.md) |
+| `/contas-a-pagar` | Sim | Relatório de contas a pagar por vencimento — [`PRD-FATURA-CONTAS-A-PAGAR.md`](./PRD-FATURA-CONTAS-A-PAGAR.md) |
 
 Layout autenticado: sidebar + topbar (menu usuário).
 
@@ -378,9 +389,9 @@ Documentos globais adicionais:
 | Fase | Entrega |
 |------|---------|
 | v1 | Web + API rodando **localmente** (este PRD) |
-| v2 | Integração Telegram via Hermes Agent |
+| v2 | Integração Telegram com parser determinístico |
 | v3 | Deploy produção, HTTPS, backups, monitoramento |
-| v4 | Grupo familiar (convites + relatório consolidado) — [`PRD-FAMILY-GROUP.md`](./PRD-FAMILY-GROUP.md); cartão de crédito e contas a pagar completos |
+| v4 | Grupo familiar (convites + relatório consolidado) — [`PRD-FAMILY-GROUP.md`](./PRD-FAMILY-GROUP.md); cartão (limite/vários cartões) e cadastro/pagamento de contas a pagar. Relatório mensal de cartão + investimento: [`PRD-INVESTIMENTOS-CARTAO.md`](./PRD-INVESTIMENTOS-CARTAO.md). Fechamento explícito de fatura + relatório de contas: [`PRD-FATURA-CONTAS-A-PAGAR.md`](./PRD-FATURA-CONTAS-A-PAGAR.md) |
 
 ---
 
@@ -388,8 +399,8 @@ Documentos globais adicionais:
 
 | Termo | Definição |
 |-------|-----------|
-| Lançamento | Entrada ou despesa registrada pelo usuário |
+| Lançamento | Entrada, despesa ou investimento registrado pelo usuário |
 | Soft delete | Exclusão lógica via `deletedAt`, sem remover do banco |
 | Mês vigente | Mês/ano corrente no fuso do usuário/servidor |
-| Hermes Agent | Integração futura para bot Telegram |
+| Telegram Bot API | Canal de conversa para cadastro de lançamentos |
 | v1 local | Primeira versão executada apenas em ambiente de desenvolvimento local |

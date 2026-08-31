@@ -11,7 +11,7 @@ export default function NewTransactionPage() {
       <PageHeader
         eyebrow="Movimentações"
         title="Novo lançamento"
-        description="Registre uma entrada ou despesa. Parcelas são distribuídas nos próximos meses."
+        description="Registre uma entrada, despesa ou investimento. Parcelas são distribuídas nos próximos meses."
       />
       <TransactionForm onSaved={() => router.push('/lancamentos')} />
     </>

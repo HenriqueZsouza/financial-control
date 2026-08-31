@@ -3,11 +3,14 @@ import type { TokenIssuer } from '../../../../application/ports/outbound/securit
 import { authenticate } from '../middleware/authenticate.js';
 import type { AuthController } from '../controllers/auth-controller.js';
 import type { CategoriesController } from '../controllers/categories-controller.js';
+import type { CreditCardController } from '../controllers/credit-card-controller.js';
 import type { DashboardController } from '../controllers/dashboard-controller.js';
+import type { PayableController } from '../controllers/payable-controller.js';
 import type { TransactionsController } from '../controllers/transactions-controller.js';
 import type { UsersController } from '../controllers/users-controller.js';
 import type { FamilyController } from '../controllers/family-controller.js';
 import type { NotificationsController } from '../controllers/notifications-controller.js';
+import type { TelegramIntegrationsController } from '../controllers/telegram-controller.js';
 
 export interface HttpControllers {
   auth: AuthController;
@@ -15,8 +18,11 @@ export interface HttpControllers {
   categories: CategoriesController;
   transactions: TransactionsController;
   dashboard: DashboardController;
+  creditCard: CreditCardController;
+  payables: PayableController;
   family: FamilyController;
   notifications: NotificationsController;
+  telegram: TelegramIntegrationsController;
 }
 
 export function apiRoutes(controllers: HttpControllers, tokens: TokenIssuer) {
@@ -36,6 +42,10 @@ export function apiRoutes(controllers: HttpControllers, tokens: TokenIssuer) {
   router.delete('/transactions/:id', protectedRoute, controllers.transactions.remove);
 
   router.get('/dashboard/summary', protectedRoute, controllers.dashboard.summary);
+  router.get('/credit-card/report', protectedRoute, controllers.creditCard.report);
+  router.get('/credit-card/open-invoice', protectedRoute, controllers.creditCard.openInvoice);
+  router.post('/credit-card/invoices/close', protectedRoute, controllers.creditCard.close);
+  router.get('/payables', protectedRoute, controllers.payables.list);
   router.patch('/users/me', protectedRoute, controllers.users.updateMe);
 
   router.get('/family', protectedRoute, controllers.family.get);
@@ -50,6 +60,10 @@ export function apiRoutes(controllers: HttpControllers, tokens: TokenIssuer) {
   router.get('/notifications', protectedRoute, controllers.notifications.list);
   router.post('/notifications/:id/read', protectedRoute, controllers.notifications.read);
   router.post('/notifications/read-all', protectedRoute, controllers.notifications.readAll);
+
+  router.post('/integrations/telegram/link-token', protectedRoute, controllers.telegram.createLinkToken);
+  router.get('/integrations/telegram', protectedRoute, controllers.telegram.get);
+  router.delete('/integrations/telegram', protectedRoute, controllers.telegram.remove);
 
   return router;
 }

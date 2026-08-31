@@ -14,7 +14,7 @@ frontend/
 
 - Componentes interativos vêm do **MUI** (Button, TextField, Select, Dialog, Alert, Snackbar, Chip, Table, Autocomplete, DatePicker). Não recriar esses padrões em CSS.
 - Importar MUI pelo caminho direto (`@mui/material/Button`, `@mui/icons-material/HomeOutlined`).
-- Datas com **dayjs** via `lib/dates.ts`: exibir `DD/MM/YYYY HH:mm:ss`; enviar calendário à API como `YYYY-MM-DD`.
+- Datas com **dayjs** via `lib/dates.ts`: exibir `DD/MM/YYYY HH:mm:ss`; filtros/calendário `toApiDate` → `YYYY-MM-DD`; lançamentos `toApiDateTime` → ISO com horário da operação.
 - Tese visual: cor saturada só em valores monetários (`Amount`); primary é tinta, não azul.
 - Chart.js só por `next/dynamic` (`ssr: false`). Server state com React Query e `queryKeys`.
 - `'use client'` no menor subtree possível. Feedback de sucesso/erro: Snackbar (`useFeedback`) e Alert inline.

@@ -20,6 +20,12 @@ const statuses: Record<DomainError['code'], number> = {
   INVITE_NOT_PENDING: 422,
   OWNER_CANNOT_LEAVE: 400,
   FAMILY_SCOPE_FORBIDDEN: 403,
+  EMPTY_OPEN_INVOICE: 422,
+  INVOICE_LOCKED: 422,
+  TELEGRAM_NOT_CONFIGURED: 503,
+  TELEGRAM_LINK_INVALID: 400,
+  TELEGRAM_ALREADY_LINKED: 409,
+  TELEGRAM_LINK_RATE_LIMITED: 429,
 };
 
 export function errorHandler(error: unknown, _req: Request, res: Response, _next: NextFunction) {

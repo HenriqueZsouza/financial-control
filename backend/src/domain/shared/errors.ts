@@ -22,6 +22,12 @@ export type DomainErrorCode =
   | 'INVITE_ALREADY_PENDING'
   | 'INVITE_NOT_PENDING'
   | 'OWNER_CANNOT_LEAVE'
-  | 'FAMILY_SCOPE_FORBIDDEN';
+  | 'FAMILY_SCOPE_FORBIDDEN'
+  | 'EMPTY_OPEN_INVOICE'
+  | 'INVOICE_LOCKED'
+  | 'TELEGRAM_NOT_CONFIGURED'
+  | 'TELEGRAM_LINK_INVALID'
+  | 'TELEGRAM_ALREADY_LINKED'
+  | 'TELEGRAM_LINK_RATE_LIMITED';
 
 export const notFound = (resource: string) => new DomainError('NOT_FOUND', `${resource} não encontrado.`);

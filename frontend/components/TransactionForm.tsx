@@ -12,7 +12,7 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { ApiError, services } from '../lib/api';
-import { DATE_FORMAT, parseApiDate, toApiDate } from '../lib/dates';
+import { DATE_FORMAT, parseApiDate, toApiDateTime } from '../lib/dates';
 import { centsToCurrencyInput, currencyInputToCents, formatCurrencyInput } from '../lib/format';
 import { useFeedback } from '../lib/feedback';
 import { queryKeys } from '../lib/query-keys';
@@ -20,7 +20,7 @@ import type { PaymentType, Transaction } from '../lib/types';
 import { Feedback } from './Feedback';
 
 const schema = z.object({
-  type: z.enum(['INCOME', 'EXPENSE']),
+  type: z.enum(['INCOME', 'EXPENSE', 'INVESTMENT']),
   name: z.string().min(1, 'Informe um nome.'),
   amount: z.string().min(1, 'Informe o valor.'),
   categoryId: z.string().min(1, 'Escolha uma categoria.'),
@@ -57,7 +57,7 @@ export function TransactionForm({ initial, onSaved }: { initial?: Transaction; o
       ...base,
       categoryId: Number(categoryId),
       amount: amountCents,
-      date: toApiDate(date),
+      date: toApiDateTime(date, initial?.date),
       ...(base.paymentType === 'INSTALLMENT' ? { installmentsCount: Number(installmentsCount) } : {}),
     };
     setPending(true);
@@ -100,6 +100,7 @@ export function TransactionForm({ initial, onSaved }: { initial?: Transaction; o
           <TextField select name="type" label="Tipo" defaultValue={initial?.type ?? 'EXPENSE'}>
             <MenuItem value="EXPENSE">Despesa</MenuItem>
             <MenuItem value="INCOME">Entrada</MenuItem>
+            <MenuItem value="INVESTMENT">Investimento</MenuItem>
           </TextField>
           <DatePicker
             label="Data"
