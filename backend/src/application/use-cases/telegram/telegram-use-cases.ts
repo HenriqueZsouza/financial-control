@@ -8,6 +8,7 @@ import type { CreateTelegramLinkToken, GetTelegramConnection, ProcessTelegramUpd
 
 const DRAFT_TTL_MS = 15 * 60 * 1000;
 const LINK_TTL_MS = 10 * 60 * 1000;
+const CATEGORY_PAGE_SIZE = 6;
 const help = 'Envie uma despesa ou receita, por exemplo: “mercado 150,50 hoje” ou “recebi 2500 salário”. Use /despesa, /receita ou /cancelar.';
 const categoryHints: Record<string, string> = { mercado: 'mercado', supermercado: 'mercado', farmácia: 'farmacia', farmacia: 'farmacia', uber: 'transporte', gasolina: 'transporte', aluguel: 'moradia', restaurante: 'lazer', salário: 'outros', salario: 'outros' };
 
@@ -15,6 +16,16 @@ function formatAmount(cents: number) { return new Intl.NumberFormat('pt-BR', { s
 function formatDraft(draft: Required<Pick<TelegramDraft, 'name' | 'amount' | 'categoryName' | 'type' | 'paymentType' | 'date'>> & TelegramDraft) {
   const payment = draft.paymentType === 'INSTALLMENT' ? `Cartão parcelado · ${draft.installmentsCount}x` : draft.paymentType === 'CREDIT_1X' ? 'Cartão de crédito · 1x' : 'À vista';
   return `Confirme este lançamento:\n${draft.name} · ${formatAmount(draft.amount)} · ${draft.categoryName}\n${draft.type === 'INCOME' ? 'Receita' : 'Despesa'} · ${payment}\nData: ${new Date(draft.date).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}`;
+}
+
+function categoryButtons(categories: Array<{ id: number; name: string }>, requestedOffset: number) {
+  const offset = Math.min(Math.max(0, requestedOffset), Math.max(0, categories.length - 1));
+  const page = categories.slice(offset, offset + CATEGORY_PAGE_SIZE);
+  const buttons = page.map((category) => [{ text: category.name, data: `category:${category.id}` }]);
+  const navigation = [];
+  if (offset > 0) navigation.push({ text: '← Anteriores', data: `categories:${Math.max(0, offset - CATEGORY_PAGE_SIZE)}` });
+  if (offset + CATEGORY_PAGE_SIZE < categories.length) navigation.push({ text: 'Próximas →', data: `categories:${offset + CATEGORY_PAGE_SIZE}` });
+  return navigation.length ? [...buttons, navigation] : buttons;
 }
 
 export class CreateTelegramLinkTokenUseCase implements CreateTelegramLinkToken {
@@ -74,6 +85,7 @@ export class ProcessTelegramUpdateUseCase implements ProcessTelegramUpdate {
     if (value === 'confirm' || value === 'confirmar') return this.confirm(connection, update, now);
     const previous = await this.repository.getConversation(connection.id);
     const existing = previous?.expiresAt && previous.expiresAt > now ? previous.draft ?? {} : {};
+    const categoryPage = value?.match(/^categories:(\d+)$/)?.[1];
     let patch: Partial<TelegramDraft> = {};
     if (value === '/despesa') patch.type = 'EXPENSE'; else if (value === '/receita') patch.type = 'INCOME'; else if (value === 'type:expense') patch.type = 'EXPENSE'; else if (value === 'type:income') patch.type = 'INCOME'; else if (value?.startsWith('category:')) patch.categoryId = Number(value.slice('category:'.length)); else if (update.text) patch = this.interpreter.interpret(update.text, now);
     const draft: TelegramDraft = { ...existing, ...patch, paymentType: patch.paymentType ?? existing.paymentType ?? 'CASH', date: patch.date ?? existing.date ?? now.toISOString() };
@@ -86,7 +98,11 @@ export class ProcessTelegramUpdateUseCase implements ProcessTelegramUpdate {
     if (!draft.type) { await this.save(connection.id, draft, 'COLLECTING', update.updateId, now); return this.bot.sendMessage(connection.chatId, 'Isso é uma receita ou despesa?', { buttons: [[{ text: 'Receita', data: 'type:income' }, { text: 'Despesa', data: 'type:expense' }]] }); }
     if (!draft.name) { await this.save(connection.id, draft, 'COLLECTING', update.updateId, now); return this.bot.sendMessage(connection.chatId, 'Qual é a descrição do lançamento?'); }
     if (!draft.amount) { await this.save(connection.id, draft, 'COLLECTING', update.updateId, now); return this.bot.sendMessage(connection.chatId, 'Qual é o valor? Exemplo: 150,50'); }
-    if (!draft.categoryId) { await this.save(connection.id, draft, 'COLLECTING', update.updateId, now); return this.bot.sendMessage(connection.chatId, 'Qual categoria devo usar?', { buttons: categories.slice(0, 6).map((category) => [{ text: category.name, data: `category:${category.id}` }]) }); }
+    if (!draft.categoryId) {
+      await this.save(connection.id, draft, 'COLLECTING', update.updateId, now);
+      const offset = categoryPage ? Number(categoryPage) : 0;
+      return this.bot.sendMessage(connection.chatId, 'Qual categoria devo usar?', { buttons: categoryButtons(categories, offset) });
+    }
     await this.save(connection.id, draft, 'AWAITING_CONFIRMATION', update.updateId, now);
     await this.bot.sendMessage(connection.chatId, formatDraft(draft as Required<TelegramDraft>), { buttons: [[{ text: 'Confirmar', data: 'confirm' }, { text: 'Cancelar', data: 'cancel' }]] });
   }

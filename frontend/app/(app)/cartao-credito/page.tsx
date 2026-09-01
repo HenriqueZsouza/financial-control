@@ -1,6 +1,7 @@
 'use client';
 
 import Alert from '@mui/material/Alert';
+import Autocomplete from '@mui/material/Autocomplete';
 import CircularProgress from '@mui/material/CircularProgress';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
@@ -9,9 +10,10 @@ import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
+import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Amount } from '../../../components/Amount';
 import { Empty } from '../../../components/Empty';
 import { PageHeader } from '../../../components/PageHeader';
@@ -21,15 +23,44 @@ import { services } from '../../../lib/api';
 import { useAuth } from '../../../lib/auth';
 import { currentPeriod, formatDateTime } from '../../../lib/dates';
 import { queryKeys } from '../../../lib/query-keys';
-import type { Transaction } from '../../../lib/types';
+import type { Category, Transaction } from '../../../lib/types';
 
 export default function CreditCardPage() {
   const [period, setPeriod] = useState(currentPeriod);
+  const [category, setCategory] = useState<Category | null>(null);
   const { valuesVisible } = useAuth();
   const { data, isLoading, error } = useQuery({
     queryKey: queryKeys.creditCard(period.month, period.year),
     queryFn: () => services.creditCardReport(period.month, period.year),
   });
+  const categories = useMemo(() => {
+    if (!data) {
+      return [];
+    }
+
+    return Array.from(
+      new Map(
+        [...data.credit1x, ...data.installments].map((item) => [item.category.id, item.category]),
+      ).values(),
+    );
+  }, [data]);
+  const filteredCredit1x = useMemo(
+    () => data?.credit1x.filter((item) => !category || item.categoryId === category.id) ?? [],
+    [category, data],
+  );
+  const filteredInstallments = useMemo(
+    () => data?.installments.filter((item) => !category || item.categoryId === category.id) ?? [],
+    [category, data],
+  );
+  const totalCredit1x = useMemo(
+    () => filteredCredit1x.reduce((total, item) => total + item.amount, 0),
+    [filteredCredit1x],
+  );
+  const totalInstallment = useMemo(
+    () => filteredInstallments.reduce((total, item) => total + item.amount, 0),
+    [filteredInstallments],
+  );
+  const total = totalCredit1x + totalInstallment;
 
   return (
     <>
@@ -37,7 +68,15 @@ export default function CreditCardPage() {
         eyebrow="Fatura"
         title="Cartão de crédito"
         description="Compras à vista em 1x e parcelas que caem neste mês."
-        action={<PeriodFilter {...period} onChange={setPeriod} />}
+        action={
+          <PeriodFilter
+            {...period}
+            onChange={(value) => {
+              setPeriod(value);
+              setCategory(null);
+            }}
+          />
+        }
       />
       {isLoading ? (
         <Stack alignItems="center" sx={{ py: 8, gap: 2 }}>
@@ -48,33 +87,54 @@ export default function CreditCardPage() {
         <Alert severity="error">Não foi possível carregar o relatório do cartão.</Alert>
       ) : (
         <>
+          <Paper
+            sx={{
+              p: 2.25,
+              mb: 2.25,
+              border: '1px solid',
+              borderColor: 'divider',
+              borderRadius: 2,
+            }}
+          >
+            <Autocomplete
+              options={categories}
+              getOptionLabel={(option) => option.name}
+              isOptionEqualToValue={(option, value) => option.id === value.id}
+              value={category}
+              onChange={(_, value) => setCategory(value)}
+              sx={{ maxWidth: 360 }}
+              renderInput={(params) => <TextField {...params} label="Categoria" />}
+            />
+          </Paper>
           <Stack
             direction={{ xs: 'column', md: 'row' }}
             spacing={2}
             sx={{ mb: 2.25 }}
           >
-            <TotalCard label="À vista (1x)" cents={data.totalCredit1x} visible={valuesVisible} />
-            <TotalCard label="Parceladas" cents={data.totalInstallment} visible={valuesVisible} />
-            <TotalCard label="Total do mês" cents={data.total} visible={valuesVisible} />
+            <TotalCard label="À vista (1x)" cents={totalCredit1x} visible={valuesVisible} />
+            <TotalCard label="Parceladas" cents={totalInstallment} visible={valuesVisible} />
+            <TotalCard label="Total do mês" cents={total} visible={valuesVisible} />
           </Stack>
-          {!data.credit1x.length && !data.installments.length ? (
+          {!filteredCredit1x.length && !filteredInstallments.length ? (
             <Paper sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
               <Empty>
-                Lance uma compra com pagamento crédito à vista (1x) ou parcelado.
+                {category
+                  ? 'Nenhuma compra nesta categoria no período selecionado.'
+                  : 'Lance uma compra com pagamento crédito à vista (1x) ou parcelado.'}
               </Empty>
             </Paper>
           ) : (
             <Stack spacing={2.25}>
               <PurchaseTable
                 title="Compras à vista (1x)"
-                rows={data.credit1x}
+                rows={filteredCredit1x}
                 visible={valuesVisible}
                 empty="Nenhuma compra à vista (1x) neste mês."
                 showInstallment={false}
               />
               <PurchaseTable
                 title="Parcelas do mês"
-                rows={data.installments}
+                rows={filteredInstallments}
                 visible={valuesVisible}
                 empty="Nenhuma parcela neste mês."
                 showInstallment
