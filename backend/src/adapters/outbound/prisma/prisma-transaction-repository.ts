@@ -90,6 +90,26 @@ export class PrismaTransactionRepository implements TransactionRepository {
     await prisma.transaction.update({ where: { id }, data: { deletedAt } });
   }
 
+  listClosedCreditCardByDuePeriod(userId: number, period: TransactionFilters['period']): Promise<Transaction[]> {
+    return prisma.transaction.findMany({
+      where: {
+        userId,
+        deletedAt: null,
+        paymentType: {
+          in: [PrismaPaymentType.CREDIT_1X, PrismaPaymentType.INSTALLMENT],
+        },
+        payable: {
+          is: {
+            deletedAt: null,
+            dueDate: { gte: period!.start, lt: period!.end },
+          },
+        },
+      },
+      include: { category: true },
+      orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
+    });
+  }
+
   async summary(userId: number, period: TransactionFilters['period']) {
     const where = { userId, deletedAt: null, date: { gte: period!.start, lt: period!.end } };
     const prior = { userId, deletedAt: null, date: { lt: period!.start } };

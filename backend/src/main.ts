@@ -87,7 +87,7 @@ const controllers = {
   ),
   dashboard: new DashboardController(new GetDashboardSummaryUseCase(transactions, clock)),
   creditCard: new CreditCardController(
-    new GetCreditCardReportUseCase(transactions, clock),
+    new GetCreditCardReportUseCase(transactions, payables, clock),
     new GetOpenCreditCardInvoiceUseCase(transactions, clock),
     new CloseCreditCardInvoiceUseCase(transactions, payables, clock),
   ),

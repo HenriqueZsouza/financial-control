@@ -67,7 +67,7 @@ export default function CreditCardPage() {
       <PageHeader
         eyebrow="Fatura"
         title="Cartão de crédito"
-        description="Compras à vista em 1x e parcelas que caem neste mês."
+        description="Compras à vista em 1x e parcelas agrupadas pelo vencimento da fatura."
         action={
           <PeriodFilter
             {...period}
@@ -120,7 +120,7 @@ export default function CreditCardPage() {
               <Empty>
                 {category
                   ? 'Nenhuma compra nesta categoria no período selecionado.'
-                  : 'Lance uma compra com pagamento crédito à vista (1x) ou parcelado.'}
+                  : 'Nenhuma compra vinculada a uma fatura com vencimento neste mês.'}
               </Empty>
             </Paper>
           ) : (

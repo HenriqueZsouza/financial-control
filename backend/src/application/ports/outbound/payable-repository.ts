@@ -11,5 +11,6 @@ export interface CloseInvoiceData {
 
 export interface PayableRepository {
   closeInvoice(data: CloseInvoiceData): Promise<Payable>;
+  findLatestCreditCardInvoice(userId: number): Promise<Payable | null>;
   list(userId: number, period: Period): Promise<Payable[]>;
 }
