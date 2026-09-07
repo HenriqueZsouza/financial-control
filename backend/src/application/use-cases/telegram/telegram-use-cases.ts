@@ -10,7 +10,7 @@ const DRAFT_TTL_MS = 15 * 60 * 1000;
 const LINK_TTL_MS = 10 * 60 * 1000;
 const CATEGORY_PAGE_SIZE = 6;
 const help = 'Envie uma despesa ou receita, por exemplo: “mercado 150,50 hoje” ou “recebi 2500 salário”. Use /despesa, /receita ou /cancelar.';
-const categoryHints: Record<string, string> = { mercado: 'mercado', supermercado: 'mercado', farmácia: 'farmacia', farmacia: 'farmacia', uber: 'transporte', gasolina: 'transporte', aluguel: 'moradia', restaurante: 'lazer', salário: 'outros', salario: 'outros' };
+const categoryHints: Record<string, string> = { mercado: 'mercado', supermercado: 'mercado', farmácia: 'farmacia', farmacia: 'farmacia', uber: 'transporte', gasolina: 'transporte', aluguel: 'moradia', restaurante: 'restaurante-delivery', delivery: 'restaurante-delivery', salário: 'salario', salario: 'salario', pet: 'pet' };
 
 function formatAmount(cents: number) { return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cents / 100); }
 function formatDraft(draft: Required<Pick<TelegramDraft, 'name' | 'amount' | 'categoryName' | 'type' | 'paymentType' | 'date'>> & TelegramDraft) {
