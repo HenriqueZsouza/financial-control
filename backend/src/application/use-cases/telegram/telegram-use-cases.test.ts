@@ -60,6 +60,30 @@ test('telegram: vincula, confirma uma despesa e ignora confirmação repetida', 
   assert.equal(created[0].externalReference, 'telegram:1:callback-1'); assert.equal(created[0].amount, 15050); assert.equal(created[0].categoryId, 1);
 });
 
+test('telegram: mensagem completa em qualquer ordem vai só para confirmação', async () => {
+  const repository = new Repository();
+  const bot = new Bot();
+  repository.connection = { id: 1, userId: 7, telegramUserId: 'tg-1', chatId: 'chat-1', username: null, firstName: null, connectedAt: now, revokedAt: null };
+  const create: CreateTransaction = { execute: async () => [] as any };
+  const useCase = new ProcessTelegramUpdateUseCase(repository, bot, new RuleBasedTelegramInterpreter(), new Categories(), create, clock, secrets);
+
+  await useCase.execute({ updateId: '1', chatId: 'chat-1', telegramUserId: 'tg-1', chatType: 'private', text: 'compra no credito de 100 mercado' });
+  assert.equal(repository.conversation?.state, 'AWAITING_CONFIRMATION');
+  assert.equal(repository.conversation?.draft?.type, 'EXPENSE');
+  assert.equal(repository.conversation?.draft?.amount, 10000);
+  assert.equal(repository.conversation?.draft?.paymentType, 'CREDIT_1X');
+  assert.equal(repository.conversation?.draft?.categoryId, 1);
+  assert.equal(repository.conversation?.draft?.name, 'mercado');
+  assert.match(bot.messages.at(-1)?.text ?? '', /Confirme este lançamento/);
+  assert.equal(bot.messages.length, 1);
+
+  await useCase.execute({ updateId: '2', chatId: 'chat-1', telegramUserId: 'tg-1', chatType: 'private', text: '100 mercado credito' });
+  assert.equal(repository.conversation?.state, 'AWAITING_CONFIRMATION');
+  assert.equal(repository.conversation?.draft?.paymentType, 'CREDIT_1X');
+  assert.equal(bot.messages.length, 2);
+  assert.equal(bot.messages.every((message) => message.text.startsWith('Confirme este lançamento')), true);
+});
+
 test('telegram: pagina todas as categorias ao pedir a seleção', async () => {
   const repository = new Repository(); const bot = new Bot();
   const entries = Array.from({ length: 8 }, (_, index) => ({ id: index + 1, name: `Categoria ${index + 1}`, slug: `categoria-${index + 1}`, icon: null, createdAt: now, updatedAt: now }));

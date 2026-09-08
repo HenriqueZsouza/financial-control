@@ -9,8 +9,62 @@ import type { CreateTelegramLinkToken, GetTelegramConnection, ProcessTelegramUpd
 const DRAFT_TTL_MS = 15 * 60 * 1000;
 const LINK_TTL_MS = 10 * 60 * 1000;
 const CATEGORY_PAGE_SIZE = 6;
-const help = 'Envie uma despesa ou receita, por exemplo: “mercado 150,50 hoje” ou “recebi 2500 salário”. Use /despesa, /receita ou /cancelar.';
-const categoryHints: Record<string, string> = { mercado: 'mercado', supermercado: 'mercado', farmácia: 'farmacia', farmacia: 'farmacia', uber: 'transporte', gasolina: 'transporte', aluguel: 'moradia', restaurante: 'restaurante-delivery', delivery: 'restaurante-delivery', salário: 'salario', salario: 'salario', pet: 'pet' };
+const help = 'Envie uma despesa ou receita em qualquer ordem, por exemplo: “compra no crédito de 100 mercado” ou “recebi 2500 salário”. Use /despesa, /receita ou /cancelar.';
+const incomeSlugs = new Set(['salario']);
+const ambiguousTypeSlugs = new Set(['investimentos', 'outros']);
+const categoryHints: Record<string, string> = {
+  mercado: 'mercado',
+  supermercado: 'mercado',
+  super: 'mercado',
+  farmacia: 'farmacia',
+  drogaria: 'farmacia',
+  uber: 'transporte',
+  gasolina: 'transporte',
+  combustivel: 'transporte',
+  aluguel: 'moradia',
+  condominio: 'moradia',
+  restaurante: 'restaurante-delivery',
+  delivery: 'restaurante-delivery',
+  ifood: 'restaurante-delivery',
+  rappi: 'restaurante-delivery',
+  salario: 'salario',
+  pet: 'pet',
+  racao: 'pet',
+  veterinario: 'pet',
+};
+
+function fold(text: string) {
+  return text.toLocaleLowerCase('pt-BR').normalize('NFD').replace(/\p{M}/gu, '');
+}
+
+function resolveCategory(categories: Array<{ id: number; name: string; slug: string }>, ...parts: Array<string | undefined>) {
+  const haystack = fold(parts.filter(Boolean).join(' '));
+  const tokens = haystack.match(/\p{L}{3,}/gu) ?? [];
+  const matches = new Map<number, { id: number; name: string }>();
+  const consider = (slug: string) => {
+    const category = categories.find((entry) => entry.slug === slug);
+    if (category) matches.set(category.id, { id: category.id, name: category.name });
+  };
+  for (const token of tokens) {
+    if (categoryHints[token]) consider(categoryHints[token]);
+    for (const category of categories) {
+      const nameTokens = fold(category.name).split(/[^\p{L}]+/gu).filter(Boolean);
+      if (fold(category.slug) === token || nameTokens.includes(token)) consider(category.slug);
+    }
+  }
+  for (const category of categories) {
+    const foldedName = fold(category.name);
+    const foldedSlug = fold(category.slug).replace(/-/g, ' ');
+    if (foldedName.length >= 3 && haystack.includes(foldedName)) consider(category.slug);
+    if (foldedSlug.length >= 3 && haystack.includes(foldedSlug)) consider(category.slug);
+  }
+  return matches.size === 1 ? [...matches.values()][0] : undefined;
+}
+
+function inferTypeFromCategory(slug: string | undefined): TelegramDraft['type'] {
+  if (!slug || ambiguousTypeSlugs.has(slug)) return undefined;
+  return incomeSlugs.has(slug) ? 'INCOME' : 'EXPENSE';
+}
 
 function formatAmount(cents: number) { return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cents / 100); }
 function formatDraft(draft: Required<Pick<TelegramDraft, 'name' | 'amount' | 'categoryName' | 'type' | 'paymentType' | 'date'>> & TelegramDraft) {
@@ -90,11 +144,19 @@ export class ProcessTelegramUpdateUseCase implements ProcessTelegramUpdate {
     if (value === '/despesa') patch.type = 'EXPENSE'; else if (value === '/receita') patch.type = 'INCOME'; else if (value === 'type:expense') patch.type = 'EXPENSE'; else if (value === 'type:income') patch.type = 'INCOME'; else if (value?.startsWith('category:')) patch.categoryId = Number(value.slice('category:'.length)); else if (update.text) patch = this.interpreter.interpret(update.text, now);
     const draft: TelegramDraft = { ...existing, ...patch, paymentType: patch.paymentType ?? existing.paymentType ?? 'CASH', date: patch.date ?? existing.date ?? now.toISOString() };
     const categories = await this.categories.list();
-    if (!draft.categoryId && draft.name) {
-      const hinted = categoryHints[draft.name.toLocaleLowerCase('pt-BR')]; const exact = categories.find((category) => category.slug === hinted || category.name.toLocaleLowerCase('pt-BR') === draft.name!.toLocaleLowerCase('pt-BR'));
-      if (exact) { draft.categoryId = exact.id; draft.categoryName = exact.name; }
+    if (!draft.categoryId) {
+      const matched = resolveCategory(categories, draft.name, update.text);
+      if (matched) {
+        draft.categoryId = matched.id;
+        draft.categoryName = matched.name;
+      }
     }
-    if (draft.categoryId) { const category = categories.find((entry) => entry.id === draft.categoryId); if (category) draft.categoryName = category.name; else delete draft.categoryId; }
+    if (draft.categoryId) {
+      const category = categories.find((entry) => entry.id === draft.categoryId);
+      if (category) draft.categoryName = category.name;
+      else delete draft.categoryId;
+    }
+    if (!draft.type) draft.type = inferTypeFromCategory(categories.find((entry) => entry.id === draft.categoryId)?.slug);
     if (!draft.type) { await this.save(connection.id, draft, 'COLLECTING', update.updateId, now); return this.bot.sendMessage(connection.chatId, 'Isso é uma receita ou despesa?', { buttons: [[{ text: 'Receita', data: 'type:income' }, { text: 'Despesa', data: 'type:expense' }]] }); }
     if (!draft.name) { await this.save(connection.id, draft, 'COLLECTING', update.updateId, now); return this.bot.sendMessage(connection.chatId, 'Qual é a descrição do lançamento?'); }
     if (!draft.amount) { await this.save(connection.id, draft, 'COLLECTING', update.updateId, now); return this.bot.sendMessage(connection.chatId, 'Qual é o valor? Exemplo: 150,50'); }
