@@ -281,7 +281,7 @@ financial-control/
 2. **Soft delete:** queries padrão ignoram registros com `deletedAt` preenchido.
 3. **Saldo disponível:** o mês herda o saldo encerrado do anterior (`openingBalance` = entradas − despesas **à vista (`CASH`)** com data anterior ao período, positivo ou negativo). O saldo exibido é `openingBalance + entradas do mês − saídas à vista do mês`. Investimentos e compras no cartão (`CREDIT_1X`, `INSTALLMENT`) **não** entram.
 4. **Valores monetários:** armazenar em centavos (Int) ou `Decimal` no Prisma; padronizar em toda a API.
-5. **Categorias iniciais (seed):** mercado, farmácia, vestuário, estudos, moradia, transporte, lazer, saúde, educação, outros.
+5. **Categorias iniciais (seed):** mercado, farmácia, vestuário, estudos, moradia, transporte, lazer, saúde, educação, outros, investimentos, salário, pet e restaurante/delivery.
 6. **Privacidade (olho):** comportamento apenas no frontend/sessão; resetado a cada login; não persiste no backend na v1.
 7. **Timestamps:** `createdAt` e `updatedAt` automáticos; `deletedAt` preenchido no soft delete.
 8. **Parcelamento:** valor total dividido em N parcelas; diferença de arredondamento ajustada na última parcela.

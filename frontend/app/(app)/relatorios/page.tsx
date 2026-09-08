@@ -21,10 +21,10 @@ import { PeriodFilter } from '../../../components/PeriodFilter';
 import { TransactionTypeChip } from '../../../components/TransactionTypeChip';
 import { services } from '../../../lib/api';
 import { useAuth } from '../../../lib/auth';
-import { currentPeriod, formatDateTime } from '../../../lib/dates';
+import { currentPeriod, dayjs, formatDateTime } from '../../../lib/dates';
 import { queryKeys } from '../../../lib/query-keys';
 import { transactionAmountTone } from '../../../lib/transaction-ui';
-import type { Category } from '../../../lib/types';
+import type { Category, Transaction } from '../../../lib/types';
 
 export default function ReportsPage() {
   const [period, setPeriod] = useState(currentPeriod);
@@ -44,6 +44,10 @@ export default function ReportsPage() {
     queryKey: queryKeys.report(params.toString()),
     queryFn: () => services.transactions(params),
   });
+  const { data: balanceData } = useQuery({
+    queryKey: queryKeys.reportBalance(scope),
+    queryFn: () => services.transactions(new URLSearchParams({ scope })),
+  });
 
   const { totalIncome, totalExpense, totalInvestment } = useMemo(() => {
     const items = data?.transactions ?? [];
@@ -55,6 +59,30 @@ export default function ReportsPage() {
       totalInvestment: items.filter((item) => item.type === 'INVESTMENT').reduce((sum, item) => sum + item.amount, 0),
     };
   }, [data]);
+  const { openingBalance, balance } = useMemo(() => {
+    const periodStart = dayjs.utc(`${period.year}-${String(period.month).padStart(2, '0')}-01`);
+    const periodEnd = periodStart.add(1, 'month');
+    const transactions = balanceData?.transactions ?? [];
+    const affectsBalance = (item: Transaction) =>
+      item.type === 'INCOME' || (item.type === 'EXPENSE' && item.paymentType === 'CASH');
+    const signedAmount = (item: Transaction) => (item.type === 'INCOME' ? item.amount : -item.amount);
+    const opening = transactions
+      .filter((item) => affectsBalance(item) && dayjs(item.date).isBefore(periodStart))
+      .reduce((sum, item) => sum + signedAmount(item), 0);
+    const periodResult = transactions
+      .filter(
+        (item) =>
+          affectsBalance(item) &&
+          !dayjs(item.date).isBefore(periodStart) &&
+          dayjs(item.date).isBefore(periodEnd),
+      )
+      .reduce((sum, item) => sum + signedAmount(item), 0);
+
+    return {
+      openingBalance: opening,
+      balance: opening + periodResult,
+    };
+  }, [balanceData, period]);
 
   return (
     <>
@@ -84,7 +112,14 @@ export default function ReportsPage() {
           </TextField>
         </Stack>
       </Paper>
-      <BoxCards totalIncome={totalIncome} totalExpense={totalExpense} totalInvestment={totalInvestment} visible={valuesVisible} />
+      <BoxCards
+        openingBalance={openingBalance}
+        balance={balance}
+        totalIncome={totalIncome}
+        totalExpense={totalExpense}
+        totalInvestment={totalInvestment}
+        visible={valuesVisible}
+      />
       <Paper sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, overflow: 'auto' }}>
         {isLoading ? (
           <Stack alignItems="center" sx={{ py: 8, gap: 2 }}>
@@ -140,11 +175,15 @@ export default function ReportsPage() {
 }
 
 function BoxCards({
+  openingBalance,
+  balance,
   totalIncome,
   totalExpense,
   totalInvestment,
   visible,
 }: {
+  openingBalance: number;
+  balance: number;
   totalIncome: number;
   totalExpense: number;
   totalInvestment: number;
@@ -152,10 +191,12 @@ function BoxCards({
 }) {
   const result = totalIncome - totalExpense;
   const cards = [
+    { label: 'Saldo anterior', cents: openingBalance, tone: 'auto' as const },
     { label: 'Entradas filtradas', cents: totalIncome, tone: 'income' as const },
     { label: 'Despesas filtradas', cents: totalExpense, tone: 'expense' as const },
     { label: 'Investimentos filtrados', cents: totalInvestment, tone: 'plain' as const },
     { label: 'Resultado filtrado', cents: result, tone: 'auto' as const },
+    { label: 'Saldo disponível', cents: balance, tone: 'auto' as const },
   ];
 
   return (

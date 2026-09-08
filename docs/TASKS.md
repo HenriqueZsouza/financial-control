@@ -40,7 +40,7 @@ Derivado de [`PRD.md`](./PRD.md). Ordem sugerida por dependência. Cada task tem
 - [ ] Enums: `INCOME` | `EXPENSE`, `CASH` | `INSTALLMENT`
 - [ ] Campos de auditoria: `createdAt`, `updatedAt`, `deletedAt?`
 - [ ] Monetário padronizado (centavos `Int` **ou** `Decimal` — escolher e documentar)
-- [ ] Seed de categorias: mercado, farmácia, vestuário, estudos, moradia, transporte, lazer, saúde, educação, outros
+- [ ] Seed de categorias: mercado, farmácia, vestuário, estudos, moradia, transporte, lazer, saúde, educação, outros, investimentos, salário, pet, restaurante/delivery
 - [ ] Scripts: `prisma migrate`, `prisma seed`, `prisma studio`
 
 **Pronto quando:** migrate + seed populam categorias; Studio abre o banco.

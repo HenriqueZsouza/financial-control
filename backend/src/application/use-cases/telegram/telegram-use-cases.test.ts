@@ -12,8 +12,9 @@ const now = new Date('2026-08-30T13:30:00.000Z');
 const clock: Clock = { now: () => now };
 const secrets: SecretGenerator = { generate: () => 'opaque-code', hash: (value) => `hash:${value}` };
 class Categories implements CategoryRepository {
-  async list() { return [{ id: 1, name: 'Mercado', slug: 'mercado', icon: null, createdAt: now, updatedAt: now }]; }
-  async exists(id: number) { return id === 1; }
+  constructor(private readonly entries = [{ id: 1, name: 'Mercado', slug: 'mercado', icon: null, createdAt: now, updatedAt: now }]) {}
+  async list() { return this.entries; }
+  async exists(id: number) { return this.entries.some((entry) => entry.id === id); }
 }
 class Repository implements TelegramRepository {
   tokens: TelegramLinkTokenRecord[] = []; connection: TelegramConnection | null = null; conversation: TelegramConversation | null = null; updates = new Set<string>();
@@ -33,7 +34,11 @@ class Repository implements TelegramRepository {
   async claimUpdate(updateId: string) { if (this.updates.has(updateId)) return false; this.updates.add(updateId); return true; }
   async completeUpdate(_updateId: string, _status: TelegramWebhookUpdateStatus, _at: Date, _errorCode?: string) {}
 }
-class Bot implements TelegramBot { messages: string[] = []; async sendMessage(_chatId: string, text: string) { this.messages.push(text); } async answerCallback(_callbackId: string) {} }
+class Bot implements TelegramBot {
+  messages: Array<{ text: string; buttons?: Array<Array<{ text: string; data: string }>> }> = [];
+  async sendMessage(_chatId: string, text: string, options?: { buttons?: Array<Array<{ text: string; data: string }>> }) { this.messages.push({ text, buttons: options?.buttons }); }
+  async answerCallback(_callbackId: string) {}
+}
 
 test('telegram: gera código opaco com validade de dez minutos', async () => {
   const repository = new Repository(); const result = await new CreateTelegramLinkTokenUseCase(repository, secrets, clock, true, 'FinancialControlBot').execute(7);
@@ -53,4 +58,18 @@ test('telegram: vincula, confirma uma despesa e ignora confirmação repetida', 
   await useCase.execute({ updateId: '5', chatId: 'chat-1', telegramUserId: 'tg-1', chatType: 'private', callbackData: 'confirm', callbackId: 'callback-2' });
   assert.equal(created.length, 1);
   assert.equal(created[0].externalReference, 'telegram:1:callback-1'); assert.equal(created[0].amount, 15050); assert.equal(created[0].categoryId, 1);
+});
+
+test('telegram: pagina todas as categorias ao pedir a seleção', async () => {
+  const repository = new Repository(); const bot = new Bot();
+  const entries = Array.from({ length: 8 }, (_, index) => ({ id: index + 1, name: `Categoria ${index + 1}`, slug: `categoria-${index + 1}`, icon: null, createdAt: now, updatedAt: now }));
+  repository.connection = { id: 1, userId: 7, telegramUserId: 'tg-1', chatId: 'chat-1', username: null, firstName: null, connectedAt: now, revokedAt: null };
+  const create: CreateTransaction = { execute: async () => [] as any };
+  const useCase = new ProcessTelegramUpdateUseCase(repository, bot, new RuleBasedTelegramInterpreter(), new Categories(entries), create, clock, secrets);
+
+  await useCase.execute({ updateId: '1', chatId: 'chat-1', telegramUserId: 'tg-1', chatType: 'private', text: 'paguei almoço 42' });
+  assert.deepEqual(bot.messages.at(-1)?.buttons?.flat().map((button) => button.data), ['category:1', 'category:2', 'category:3', 'category:4', 'category:5', 'category:6', 'categories:6']);
+
+  await useCase.execute({ updateId: '2', chatId: 'chat-1', telegramUserId: 'tg-1', chatType: 'private', callbackData: 'categories:6', callbackId: 'callback-1' });
+  assert.deepEqual(bot.messages.at(-1)?.buttons?.flat().map((button) => button.data), ['category:7', 'category:8', 'categories:0']);
 });

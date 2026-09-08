@@ -49,7 +49,7 @@ Para investir, use `"type": "INVESTMENT"`. Investimentos não entram em `totalEx
 
 Para parcelar, envie `paymentType: "INSTALLMENT"` e `installmentsCount`. A API distribui as parcelas mensalmente.
 
-`GET /api/credit-card/report` devolve as compras `CREDIT_1X` e as parcelas `INSTALLMENT` do período (`date` de cada linha). `CASH` não entra. Sem `month`/`year`, usa o mês atual. Linhas já vinculadas a uma fatura fechada **continuam** no relatório.
+`GET /api/credit-card/report` devolve as compras `CREDIT_1X` e as parcelas `INSTALLMENT` agrupadas pelo mês de **vencimento da fatura**. Assim, uma compra feita em julho e vinculada a uma fatura que vence em setembro aparece no filtro de setembro. `CASH` não entra. Sem `month`/`year`, usa o mês atual. A fatura ainda aberta aparece no mês seguinte ao vencimento da última fatura fechada; sem fechamento anterior, ela aparece provisoriamente no mês atual. Ao fechá-la, suas linhas passam a constar no mês do vencimento informado.
 
 `GET /api/credit-card/open-invoice` soma só o que ainda não foi fechado, com `date` até o instante atual. A fatura **não** fecha sozinha: só `POST /api/credit-card/invoices/close` com `dueDate` cria a conta a pagar (snapshot). Sem linhas em aberto: `422 EMPTY_OPEN_INVOICE`.
 

@@ -130,8 +130,8 @@ export const openApiSchemas = {
     required: ['period', 'totalCredit1x', 'totalInstallment', 'total', 'credit1xCount', 'installmentCount', 'credit1x', 'installments'],
     properties: {
       period: { type: 'object', required: ['month', 'year'], properties: { month: { type: 'integer', minimum: 1, maximum: 12 }, year: { type: 'integer', minimum: 2000, maximum: 9999 } } },
-      totalCredit1x: { type: 'integer', description: 'Soma em centavos das compras CREDIT_1X no período.', example: 13500 },
-      totalInstallment: { type: 'integer', description: 'Soma em centavos das parcelas INSTALLMENT no período.', example: 30000 },
+      totalCredit1x: { type: 'integer', description: 'Soma em centavos das compras CREDIT_1X nas faturas com vencimento no período.', example: 13500 },
+      totalInstallment: { type: 'integer', description: 'Soma em centavos das parcelas INSTALLMENT nas faturas com vencimento no período.', example: 30000 },
       total: { type: 'integer', description: 'totalCredit1x + totalInstallment, em centavos.', example: 43500 },
       credit1xCount: { type: 'integer', example: 2 },
       installmentCount: { type: 'integer', example: 1 },

@@ -58,6 +58,7 @@ export default function TransactionsPage() {
         client.invalidateQueries({ queryKey: ['transactions'] }),
         client.invalidateQueries({ queryKey: ['summary'] }),
         client.invalidateQueries({ queryKey: ['report'] }),
+        client.invalidateQueries({ queryKey: ['report-balance'] }),
         client.invalidateQueries({ queryKey: ['credit-card'] }),
       ]);
       notify('Lançamento excluído.');

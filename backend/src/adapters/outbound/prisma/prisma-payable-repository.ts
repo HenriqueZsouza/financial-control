@@ -87,6 +87,18 @@ export class PrismaPayableRepository implements PayableRepository {
     });
   }
 
+  async findLatestCreditCardInvoice(userId: number): Promise<Payable | null> {
+    const payable = await prisma.payable.findFirst({
+      where: {
+        userId,
+        deletedAt: null,
+        source: PrismaPayableSource.CREDIT_CARD_INVOICE,
+      },
+      orderBy: [{ closedAt: 'desc' }, { id: 'desc' }],
+    });
+    return payable ? toDomain(payable) : null;
+  }
+
   async list(userId: number, period: { start: Date; end: Date }): Promise<Payable[]> {
     const rows = await prisma.payable.findMany({
       where: {

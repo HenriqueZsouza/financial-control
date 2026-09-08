@@ -80,7 +80,7 @@ export const openApiDocument = {
         tags: ['Credit card'],
         summary: 'Relatório mensal de compras no cartão',
         security: bearerSecurity,
-        description: 'Soma e lista lançamentos `CREDIT_1X` e `INSTALLMENT` do usuário no período (`date` de cada linha). `CASH` não entra. Sem `month`/`year`, usa o mês atual. Linhas já fechadas continuam aparecendo.',
+        description: 'Soma e lista lançamentos `CREDIT_1X` e `INSTALLMENT` das faturas que vencem no período. A fatura aberta aparece no mês seguinte ao vencimento da última fatura fechada, ou no mês atual se não houver uma anterior. `CASH` não entra. Sem `month`/`year`, usa o mês atual.',
         parameters: periodParameters,
         responses: {
           '200': { description: 'Relatório do período', ...json('CreditCardReport') },

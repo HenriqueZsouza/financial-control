@@ -28,5 +28,6 @@ export interface TransactionRepository {
     openingBalance: number;
     byCategory: CategoryTotal[];
   }>;
+  listClosedCreditCardByDuePeriod(userId: number, period: Period): Promise<Transaction[]>;
   listOpenCreditCard(userId: number, now: Date): Promise<Transaction[]>;
 }

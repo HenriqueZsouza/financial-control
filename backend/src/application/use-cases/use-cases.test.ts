@@ -80,6 +80,20 @@ class Transactions implements TransactionRepository {
     }) as any;
   }
 
+  invoiceDueDates = new Map<number, Date>();
+
+  async listClosedCreditCardByDuePeriod(userId: number, period: Parameters<TransactionRepository['listClosedCreditCardByDuePeriod']>[1]) {
+    return this.items.filter((item) => {
+      const dueDate = item.payableId == null ? undefined : this.invoiceDueDates.get(item.payableId);
+      return !item.deletedAt
+        && item.userId === userId
+        && (item.paymentType === 'CREDIT_1X' || item.paymentType === 'INSTALLMENT')
+        && dueDate != null
+        && dueDate >= period.start
+        && dueDate < period.end;
+    }) as any;
+  }
+
   async findActiveById(userId: number, id: number) {
     return this.current?.id === id && this.current.userId === userId && !this.current.deletedAt ? this.current : null;
   }
@@ -164,6 +178,12 @@ class Payables implements PayableRepository {
       item.payableId = payable.id;
     }
     return payable;
+  }
+
+  async findLatestCreditCardInvoice(userId: number) {
+    return this.items
+      .filter((item) => item.userId === userId && !item.deletedAt && item.source === 'CREDIT_CARD_INVOICE')
+      .sort((left, right) => right.closedAt.getTime() - left.closedAt.getTime() || right.id - left.id)[0] ?? null;
   }
 
   async list(userId: number, period: { start: Date; end: Date }) {
@@ -307,7 +327,7 @@ test('investimento à vista e parcelado; listagem isola o tipo', async () => {
   assert.equal(expenses.length, 0);
 });
 
-test('relatório de cartão agrupa 1x e parcelas, ignora cash, outro usuário e soft delete', async () => {
+test('relatório de cartão agrupa faturas fechadas pelo vencimento e a fatura aberta no mês atual', async () => {
   const repo = new Transactions();
   const august = new Date('2026-08-10T12:00:00.000Z');
   const stamp = { createdAt: fixedClock.now(), updatedAt: fixedClock.now(), deletedAt: null as Date | null, payableId: null as number | null };
@@ -320,16 +340,54 @@ test('relatório de cartão agrupa 1x e parcelas, ignora cash, outro usuário e 
     { id: 6, userId: 2, categoryId: 1, type: 'EXPENSE', name: 'Outro', amount: 9999, paymentType: 'CREDIT_1X', installmentsCount: null, installmentGroupId: null, installmentNumber: null, date: august, ...stamp },
     { id: 7, userId: 1, categoryId: 1, type: 'EXPENSE', name: 'Apagado', amount: 1111, paymentType: 'CREDIT_1X', installmentsCount: null, installmentGroupId: null, installmentNumber: null, date: august, ...stamp, deletedAt: fixedClock.now() },
   ];
-  const report = await new GetCreditCardReportUseCase(repo, fixedClock).execute(1, periodOf(8, 2026));
-  assert.equal(report.totalCredit1x, 13500);
+  const payables = new Payables(repo);
+  const report = await new GetCreditCardReportUseCase(repo, payables, fixedClock).execute(1, periodOf(8, 2026));
+  assert.equal(report.totalCredit1x, 14500);
   assert.equal(report.totalInstallment, 30000);
-  assert.equal(report.total, 43500);
-  assert.equal(report.credit1xCount, 2);
+  assert.equal(report.total, 44500);
+  assert.equal(report.credit1xCount, 3);
   assert.equal(report.installmentCount, 1);
   assert.equal(report.credit1x.some((item) => item.paymentType === 'CASH'), false);
   assert.ok(report.credit1x.some((item) => item.type === 'INVESTMENT'));
-  const current = await new GetCreditCardReportUseCase(repo, fixedClock).execute(1);
+  const current = await new GetCreditCardReportUseCase(repo, payables, fixedClock).execute(1);
   assert.deepEqual(current.period, { month: 8, year: 2026 });
+});
+
+test('relatório de cartão usa o vencimento da fatura fechada, não a data da compra', async () => {
+  const repo = new Transactions();
+  const payables = new Payables(repo);
+  const stamp = { createdAt: fixedClock.now(), updatedAt: fixedClock.now(), deletedAt: null as Date | null };
+  repo.invoiceDueDates.set(10, new Date('2026-09-10T00:00:00.000Z'));
+  payables.items = [{
+    id: 10,
+    userId: 1,
+    name: 'Fatura do cartão · venc. 10/09/2026',
+    amount: 11500,
+    dueDate: new Date('2026-09-10T00:00:00.000Z'),
+    source: 'CREDIT_CARD_INVOICE',
+    status: 'PENDING',
+    closedAt: fixedClock.now(),
+    createdAt: fixedClock.now(),
+    updatedAt: fixedClock.now(),
+    deletedAt: null,
+  }];
+  repo.items = [
+    { id: 1, userId: 1, categoryId: 1, type: 'EXPENSE', name: 'Compra de julho', amount: 8500, paymentType: 'CREDIT_1X', installmentsCount: null, installmentGroupId: null, installmentNumber: null, date: new Date('2026-07-29T12:00:00.000Z'), payableId: 10, ...stamp },
+    { id: 2, userId: 1, categoryId: 1, type: 'EXPENSE', name: 'Parcela de agosto', amount: 3000, paymentType: 'INSTALLMENT', installmentsCount: 12, installmentGroupId: 1, installmentNumber: 2, date: new Date('2026-08-01T12:00:00.000Z'), payableId: 10, ...stamp },
+    { id: 3, userId: 1, categoryId: 1, type: 'EXPENSE', name: 'Compra aberta', amount: 1200, paymentType: 'CREDIT_1X', installmentsCount: null, installmentGroupId: null, installmentNumber: null, date: fixedClock.now(), payableId: null, ...stamp },
+  ];
+
+  const report = await new GetCreditCardReportUseCase(repo, payables, fixedClock).execute(1, periodOf(9, 2026));
+
+  assert.equal(report.totalCredit1x, 8500);
+  assert.equal(report.totalInstallment, 3000);
+  assert.equal(report.total, 11500);
+  assert.equal(report.credit1x.some((item) => item.name === 'Compra aberta'), false);
+  assert.equal(report.credit1x[0].name, 'Compra de julho');
+
+  const october = await new GetCreditCardReportUseCase(repo, payables, fixedClock).execute(1, periodOf(10, 2026));
+  assert.equal(october.total, 1200);
+  assert.equal(october.credit1x[0].name, 'Compra aberta');
 });
 
 test('despesa no cartão não entra em totalExpense nem reduz o saldo', async () => {
@@ -462,4 +520,3 @@ test('lançamento em fatura fechada não exclui nem altera valor', async () => {
   const renamed = await update.execute(1, 1, { name: 'Ajuste' });
   assert.equal(renamed.name, 'Ajuste');
 });
-
