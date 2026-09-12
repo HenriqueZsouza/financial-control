@@ -54,3 +54,15 @@ Veja [arquitetura](docs/ARCHITECTURE.md), [contratos da API](docs/API.md), [guia
 ## Produção (Neon + Render + Vercel)
 
 Veja [docs/DEPLOY.md](docs/DEPLOY.md) para migrar o Postgres local, subir a API no Render, o frontend no Vercel e configurar o webhook do Telegram.
+
+## Stacks locais (local vs produção)
+
+Para apontar o projeto local à API/banco de produção (ou voltar ao Docker):
+
+```bash
+./scripts/use-stack.sh prod-api   # front local → API Render
+./scripts/use-stack.sh prod       # + backend no Neon
+./scripts/use-stack.sh local      # volta ao Docker
+```
+
+Detalhes em [docs/LOCAL-STACKS.md](docs/LOCAL-STACKS.md).
