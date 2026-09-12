@@ -10,8 +10,3 @@ coverage/
 .claude
 .cursor
 backups/
-.env.prod.local
-backend/.env.prod.local
-frontend/.env.prod.local
-.stack
-backend/.env.local.stack
