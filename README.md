@@ -50,3 +50,7 @@ Abra `http://localhost:3000`. A API responde em `http://localhost:3333`; `GET /h
 - Parcelamentos geram uma linha por mês, com a diferença de arredondamento na última parcela.
 
 Veja [arquitetura](docs/ARCHITECTURE.md), [contratos da API](docs/API.md), [guia local do Telegram](docs/TELEGRAM-LOCAL.md) e [componentes](docs/components.md) para detalhes.
+
+## Produção (Neon + Render + Vercel)
+
+Veja [docs/DEPLOY.md](docs/DEPLOY.md) para migrar o Postgres local, subir a API no Render, o frontend no Vercel e configurar o webhook do Telegram.
