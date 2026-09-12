@@ -8,3 +8,5 @@ coverage/
 !.env.example
 .agents
 .claude
+.cursor
+backups/
