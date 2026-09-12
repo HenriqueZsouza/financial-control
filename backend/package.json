@@ -10,7 +10,8 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "prisma db seed",
     "prisma:studio": "prisma studio",
-    "test": "tsx --test src/**/*.test.ts"
+    "test": "tsx --test src/**/*.test.ts",
+    "build:ci": "npm ci --include=dev && prisma generate && tsc"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
