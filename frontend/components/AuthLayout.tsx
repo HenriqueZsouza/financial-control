@@ -3,7 +3,7 @@
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import { tokens } from '../lib/theme';
+import { ThemeToggle } from './ThemeToggle';
 
 export function AuthLayout({
   headline,
@@ -30,8 +30,8 @@ export function AuthLayout({
           position: 'relative',
           overflow: 'hidden',
           p: { xs: 4, md: 8 },
-          bgcolor: tokens.ink,
-          color: tokens.paper,
+          bgcolor: 'primary.main',
+          color: 'primary.contrastText',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
@@ -56,8 +56,8 @@ export function AuthLayout({
               width: 34,
               height: 34,
               borderRadius: '9px',
-              bgcolor: '#fff',
-              color: tokens.ink,
+              bgcolor: 'primary.contrastText',
+              color: 'primary.main',
               display: 'grid',
               placeItems: 'center',
               fontFamily: 'var(--font-display), "Space Grotesk", sans-serif',
@@ -66,7 +66,7 @@ export function AuthLayout({
           >
             $
           </Box>
-          <Typography sx={{ fontFamily: 'var(--font-display), "Space Grotesk", sans-serif', fontWeight: 600, color: '#fff' }}>
+          <Typography sx={{ fontFamily: 'var(--font-display), "Space Grotesk", sans-serif', fontWeight: 600, color: 'primary.contrastText' }}>
             Financial Control
           </Typography>
         </Stack>
@@ -81,7 +81,7 @@ export function AuthLayout({
               fontWeight: 600,
               lineHeight: 1.02,
               letterSpacing: '-0.035em',
-              color: '#fff',
+              color: 'primary.contrastText',
             }}
           >
             {headline}
@@ -92,7 +92,10 @@ export function AuthLayout({
           {footer}
         </Typography>
       </Box>
-      <Stack alignItems="center" justifyContent="center" sx={{ p: { xs: 3, md: 6 } }}>
+      <Stack alignItems="center" justifyContent="center" sx={{ position: 'relative', p: { xs: 3, md: 6 } }}>
+        <Box sx={{ position: 'absolute', top: { xs: 16, md: 24 }, right: { xs: 16, md: 24 } }}>
+          <ThemeToggle />
+        </Box>
         <Box sx={{ width: 'min(100%, 400px)' }}>{children}</Box>
       </Stack>
     </Box>

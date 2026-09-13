@@ -1,4 +1,5 @@
 import { createTheme } from '@mui/material/styles';
+import type { PaletteMode } from '@mui/material';
 import { ptBR } from '@mui/material/locale';
 import { ptBR as pickersPtBR } from '@mui/x-date-pickers/locales';
 
@@ -20,21 +21,36 @@ export const tokens = {
   categoryRamp: ['#8F2B2F', '#B0353A', '#C4353A', '#D1584F', '#DD7A6D', '#E69C8F', '#EFC0B5', '#F6DDD7'],
 } as const;
 
+const darkTokens = {
+  paper: '#11161D',
+  surface: '#1A212B',
+  surface2: '#222B36',
+  ink: '#E8EDF3',
+  inkSoft: '#C2CAD4',
+  muted: '#98A3B3',
+  faint: '#778394',
+  line: '#2B3542',
+  lineStrong: '#3A4655',
+} as const;
+
 const fontBody = 'var(--font-body), Inter, system-ui, sans-serif';
 const fontDisplay = 'var(--font-display), "Space Grotesk", system-ui, sans-serif';
 const fontMono = 'var(--font-mono), "JetBrains Mono", ui-monospace, monospace';
 
-export const theme = createTheme(
-  {
+export function createAppTheme(mode: PaletteMode) {
+  const palette = mode === 'dark' ? darkTokens : tokens;
+
+  return createTheme(
+    {
     palette: {
-      mode: 'light',
-      primary: { main: tokens.ink, contrastText: '#FFFFFF' },
-      secondary: { main: tokens.inkSoft, contrastText: '#FFFFFF' },
+      mode,
+      primary: { main: palette.ink, contrastText: mode === 'dark' ? '#11161D' : '#FFFFFF' },
+      secondary: { main: palette.inkSoft, contrastText: mode === 'dark' ? '#11161D' : '#FFFFFF' },
       success: { main: tokens.income, light: tokens.incomeSoft, contrastText: '#FFFFFF' },
       error: { main: tokens.expense, light: tokens.expenseSoft, contrastText: '#FFFFFF' },
-      background: { default: tokens.paper, paper: tokens.surface },
-      text: { primary: tokens.ink, secondary: tokens.muted },
-      divider: tokens.line,
+      background: { default: palette.paper, paper: palette.surface },
+      text: { primary: palette.ink, secondary: palette.muted },
+      divider: palette.line,
     },
     shape: { borderRadius: 10 },
     typography: {
@@ -49,15 +65,15 @@ export const theme = createTheme(
         fontWeight: 500,
         letterSpacing: '0.14em',
         lineHeight: 1.4,
-        color: tokens.faint,
+        color: palette.faint,
       },
-      caption: { fontFamily: fontMono, fontSize: 12, letterSpacing: '0.02em', color: tokens.muted },
+      caption: { fontFamily: fontMono, fontSize: 12, letterSpacing: '0.02em', color: palette.muted },
     },
     components: {
       MuiCssBaseline: {
         styleOverrides: {
-          body: { backgroundColor: tokens.paper, color: tokens.ink },
-          '::selection': { background: tokens.ink, color: '#FFFFFF' },
+          body: { backgroundColor: palette.paper, color: palette.ink },
+          '::selection': { background: palette.ink, color: mode === 'dark' ? '#11161D' : '#FFFFFF' },
         },
       },
       MuiButton: {
@@ -67,12 +83,12 @@ export const theme = createTheme(
       MuiButtonBase: {
         styleOverrides: {
           root: {
-            '&.Mui-focusVisible': { outline: `2px solid ${tokens.ink}`, outlineOffset: 2 },
+            '&.Mui-focusVisible': { outline: `2px solid ${palette.ink}`, outlineOffset: 2 },
           },
         },
       },
       MuiTextField: { defaultProps: { size: 'small', fullWidth: true } },
-      MuiFormLabel: { styleOverrides: { root: { fontWeight: 600, color: tokens.inkSoft } } },
+      MuiFormLabel: { styleOverrides: { root: { fontWeight: 600, color: palette.inkSoft } } },
       MuiPaper: { defaultProps: { elevation: 0 } },
       MuiDialog: { styleOverrides: { paper: { borderRadius: 16 } } },
       MuiAlert: { styleOverrides: { root: { borderRadius: 10 } } },
@@ -85,14 +101,15 @@ export const theme = createTheme(
             fontWeight: 500,
             letterSpacing: '0.1em',
             textTransform: 'uppercase',
-            color: tokens.faint,
-            borderBottomColor: tokens.line,
+            color: palette.faint,
+            borderBottomColor: palette.line,
           },
-          body: { borderBottomColor: tokens.line, fontSize: 14 },
+          body: { borderBottomColor: palette.line, fontSize: 14 },
         },
       },
     },
-  },
-  ptBR,
-  pickersPtBR,
-);
+    },
+    ptBR,
+    pickersPtBR,
+  );
+}

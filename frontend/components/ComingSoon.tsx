@@ -3,7 +3,6 @@
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
-import { tokens } from '../lib/theme';
 import { PageHeader } from './PageHeader';
 
 export function ComingSoon({
@@ -28,7 +27,7 @@ export function ComingSoon({
           p: { xs: 5, sm: 7 },
           textAlign: 'center',
           border: '1px dashed',
-          borderColor: tokens.lineStrong,
+          borderColor: 'divider',
           borderRadius: 2,
         }}
       >
@@ -39,8 +38,8 @@ export function ComingSoon({
             mx: 'auto',
             mb: 2.25,
             borderRadius: '14px',
-            bgcolor: tokens.surface2,
-            color: tokens.inkSoft,
+            bgcolor: 'action.hover',
+            color: 'text.secondary',
             display: 'grid',
             placeItems: 'center',
           }}
