@@ -38,7 +38,7 @@ function LoginForm() {
       await login(check.data.email, check.data.password);
       router.replace('/');
     } catch (reason) {
-      setError(reason instanceof ApiError ? reason.message : 'Não foi possível entrar agora.');
+      setError(reason instanceof ApiError ? reason.message : 'Não foi possível acessar');
     } finally {
       setPending(false);
     }

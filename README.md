@@ -54,3 +54,13 @@ Veja [arquitetura](docs/ARCHITECTURE.md), [contratos da API](docs/API.md), [guia
 ## Produção (Neon + Render + Vercel)
 
 Veja [docs/DEPLOY.md](docs/DEPLOY.md) para migrar o Postgres local, subir a API no Render, o frontend no Vercel e configurar o webhook do Telegram.
+
+## Ambiente local vs produção
+
+Nos arquivos `backend/.env` e `frontend/.env.local`, há blocos **LOCAL** e **PRODUÇÃO**.
+Deixe ativo só um de cada (`DATABASE_URL` / `JWT_SECRET` no backend; `NEXT_PUBLIC_API_URL` no frontend) e comente o outro.
+Reinicie o `npm run dev` depois de mudar.
+
+- Front na API de produção: descomente a URL do Render no `frontend/.env.local`.
+- Backend no Neon: descomente o bloco de produção no `backend/.env` (e comente o Docker).
+

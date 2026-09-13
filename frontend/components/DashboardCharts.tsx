@@ -5,6 +5,7 @@ import { Bar, Doughnut } from 'react-chartjs-2';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
+import { useTheme } from '@mui/material/styles';
 import type { Summary } from '../lib/types';
 import { money } from '../lib/format';
 import { tokens } from '../lib/theme';
@@ -12,19 +13,27 @@ import { Empty } from './Empty';
 
 ChartJS.register(ArcElement, BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
-const barOptions = {
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: { display: false },
-  },
-  scales: {
-    x: { grid: { display: false }, border: { display: false }, ticks: { color: tokens.faint } },
-    y: { grid: { color: tokens.line }, border: { display: false }, ticks: { color: tokens.faint, callback: (value: string | number) => `R$ ${value}` } },
-  },
-} as const;
-
 export function DashboardCharts({ summary, visible }: { summary: Summary; visible: boolean }) {
+  const theme = useTheme();
+  const barOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+    },
+    scales: {
+      x: { grid: { display: false }, border: { display: false }, ticks: { color: theme.palette.text.secondary } },
+      y: {
+        grid: { color: theme.palette.divider },
+        border: { display: false },
+        ticks: {
+          color: theme.palette.text.secondary,
+          callback: (value: string | number) => `R$ ${value}`,
+        },
+      },
+    },
+  } as const;
+
   return (
     <Box
       sx={{
@@ -74,7 +83,7 @@ export function DashboardCharts({ summary, visible }: { summary: Summary; visibl
                   {
                     data: visible ? summary.byCategory.map((item) => item.total / 100) : summary.byCategory.map(() => 1),
                     backgroundColor: [...tokens.categoryRamp],
-                    borderColor: '#ffffff',
+                    borderColor: theme.palette.background.paper,
                     borderWidth: 2,
                   },
                 ],
@@ -86,7 +95,13 @@ export function DashboardCharts({ summary, visible }: { summary: Summary; visibl
                 plugins: {
                   legend: {
                     position: 'bottom',
-                    labels: { color: tokens.muted, boxWidth: 10, boxHeight: 10, usePointStyle: true, padding: 14 },
+                    labels: {
+                      color: theme.palette.text.secondary,
+                      boxWidth: 10,
+                      boxHeight: 10,
+                      usePointStyle: true,
+                      padding: 14,
+                    },
                   },
                   tooltip: {
                     callbacks: { label: (item) => (visible ? `${item.label}: ${money(Math.round(Number(item.raw) * 100))}` : `${item.label}: oculto`) },

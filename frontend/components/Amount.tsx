@@ -1,7 +1,7 @@
 import Box from '@mui/material/Box';
-import type { SxProps, Theme } from '@mui/material/styles';
+import type { SxProps } from '@mui/material/styles';
+import type { Theme } from '@mui/material/styles';
 import { money } from '../lib/format';
-import { tokens } from '../lib/theme';
 
 type Tone = 'income' | 'expense' | 'auto' | 'plain';
 
@@ -19,8 +19,7 @@ export function Amount({
   sx?: SxProps<Theme>;
 }) {
   const resolved = tone === 'auto' ? (cents >= 0 ? 'income' : 'expense') : tone;
-  const color =
-    resolved === 'income' ? tokens.income : resolved === 'expense' ? tokens.expense : tokens.ink;
+  const color = resolved === 'income' ? 'success.main' : resolved === 'expense' ? 'error.main' : 'text.primary';
   const body = sign ? `${sign} ${money(Math.abs(cents))}` : money(cents);
 
   return (

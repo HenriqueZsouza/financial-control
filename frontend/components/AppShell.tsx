@@ -30,7 +30,7 @@ import Toolbar from '@mui/material/Toolbar';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import useMediaQuery from '@mui/material/useMediaQuery';
-import { useTheme } from '@mui/material/styles';
+import { alpha, useTheme } from '@mui/material/styles';
 import NextLink from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -38,7 +38,7 @@ import { useAuth } from '../lib/auth';
 import { useQuery } from '@tanstack/react-query';
 import { services } from '../lib/api';
 import { queryKeys } from '../lib/query-keys';
-import { tokens } from '../lib/theme';
+import { ThemeToggle } from './ThemeToggle';
 
 const DRAWER_WIDTH = 264;
 
@@ -97,8 +97,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             width: 34,
             height: 34,
             borderRadius: '9px',
-            bgcolor: tokens.ink,
-            color: '#fff',
+            bgcolor: 'primary.main',
+            color: 'primary.contrastText',
             display: 'grid',
             placeItems: 'center',
             fontFamily: 'var(--font-display), "Space Grotesk", sans-serif',
@@ -135,11 +135,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   sx={{
                     borderRadius: 1,
                     mb: 0.25,
-                    '&.Mui-selected': { bgcolor: tokens.ink, color: '#fff', '&:hover': { bgcolor: '#000' } },
-                    '&.Mui-selected .MuiListItemIcon-root': { color: '#fff' },
+                    '&.Mui-selected': {
+                      bgcolor: 'primary.main',
+                      color: 'primary.contrastText',
+                      '&:hover': { bgcolor: 'primary.dark' },
+                    },
+                    '&.Mui-selected .MuiListItemIcon-root': { color: 'primary.contrastText' },
                   }}
                 >
-                  <ListItemIcon sx={{ minWidth: 36, color: selected ? '#fff' : 'text.secondary' }}>
+                  <ListItemIcon sx={{ minWidth: 36, color: selected ? 'primary.contrastText' : 'text.secondary' }}>
                     {link.href === '/familia' && pendingInviteCount > 0 ? (
                       <Badge badgeContent={pendingInviteCount} color="error" max={99}>
                         <Icon fontSize="small" />
@@ -178,7 +182,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           position="sticky"
           color="inherit"
           sx={{
-            bgcolor: 'rgba(255,255,255,0.75)',
+            bgcolor: alpha(theme.palette.background.default, 0.78),
             backdropFilter: 'blur(8px)',
             boxShadow: 'none',
             borderBottom: '1px solid',
@@ -191,6 +195,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <MenuIcon />
               </IconButton>
             ) : null}
+            <ThemeToggle />
             <Tooltip title={valuesVisible ? 'Ocultar valores' : 'Mostrar valores'}>
               <IconButton
                 aria-pressed={valuesVisible}
@@ -208,7 +213,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </IconButton>
             </Tooltip>
             <Divider orientation="vertical" flexItem sx={{ mx: 1, my: 1.5 }} />
-            <Avatar sx={{ width: 36, height: 36, bgcolor: tokens.ink, fontSize: 12, fontFamily: 'var(--font-display), "Space Grotesk", sans-serif' }}>
+            <Avatar sx={{ width: 36, height: 36, bgcolor: 'primary.main', color: 'primary.contrastText', fontSize: 12, fontFamily: 'var(--font-display), "Space Grotesk", sans-serif' }}>
               {initials}
             </Avatar>
             <ButtonLink href="/perfil">Perfil</ButtonLink>
@@ -245,7 +250,7 @@ function ButtonLink({ href, children }: { href: string; children: React.ReactNod
         fontSize: 14,
         fontWeight: 500,
         borderRadius: 1,
-        '&:hover': { color: 'text.primary', bgcolor: tokens.surface2 },
+        '&:hover': { color: 'text.primary', bgcolor: 'action.hover' },
       }}
     >
       {children}
