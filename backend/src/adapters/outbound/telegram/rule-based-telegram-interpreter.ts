@@ -57,11 +57,13 @@ function amountFromText(text: string) {
 
 function nameFromText(text: string) {
   const stripped = text
-    .replace(/(?:r\$\s*)?\d{1,9}(?:[.,]\d{1,2})?\s*(?:reais?)?/g, ' ')
-    .replace(/\b\d{1,3}\s*x\b/g, ' ')
     .replace(/\b\d{1,2}\/\d{1,2}(?:\/\d{4})?\b/g, ' ')
+    .replace(/\b\d{1,3}\s*x\b/g, ' ')
+    .replace(/\bparcelad[oa](?:\s+em)?\s+\d{1,3}\b/g, ' ')
+    .replace(/(?:r\$\s*)?\d{1,9}(?:[.,]\d{1,2})?\s*(?:reais?)?/g, ' ')
+    .replace(/\ba\s+vista\b/g, ' ')
     .replace(/\b(hoje|ontem|cartao|credito|parcelad[oa]|vista|pix|dinheiro|debito|compra|comprei|comprar|paguei|pago|gastei|gasto|despesa|recebi|receita|entrada|venda|ganhei|rendimento)\b/g, ' ')
-    .replace(/\b(no|na|nos|nas|do|da|dos|das|de|em|um|uma|uns|umas|por|para|com|num|numa|ao|e|ou)\b/g, ' ')
+    .replace(/\b(no|na|nos|nas|do|da|dos|das|de|em|um|uma|uns|umas|o|a|os|as|por|para|com|num|numa|ao|e|ou)\b/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
     .replace(/^[,;:.-]+|[,;:.-]+$/g, '');
