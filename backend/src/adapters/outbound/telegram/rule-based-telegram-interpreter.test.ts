@@ -34,3 +34,42 @@ test('interpreter: reconhece receita, parcelas e data relativa', () => {
   assert.equal(interpreter.interpret('gastei 50 no uber ontem', now).amount, 5000);
   assert.equal(interpreter.interpret('mercado 150,50 hoje', now).amount, 15050);
 });
+
+test('interpreter: “a vista” não deixa resto na descrição', () => {
+  const variants = ['mercado 100,00 a vista', 'mercado 100,00 à vista', 'a vista mercado 100'];
+  for (const text of variants) {
+    const draft = interpreter.interpret(text, now);
+    assert.equal(draft.name, 'mercado', text);
+    assert.equal(draft.amount, 10000, text);
+    assert.equal(draft.paymentType, 'CASH', text);
+  }
+});
+
+test('interpreter: crédito à vista e parcelado também limpam a descrição', () => {
+  const credit = [
+    'mercado 100,00 no credito',
+    'mercado 100,00 no cartão',
+    'mercado 100,00 credito a vista',
+    'crédito à vista mercado 100',
+  ];
+  for (const text of credit) {
+    const draft = interpreter.interpret(text, now);
+    assert.equal(draft.name, 'mercado', text);
+    assert.equal(draft.amount, 10000, text);
+    assert.equal(draft.paymentType, 'CREDIT_1X', text);
+    assert.equal(draft.installmentsCount, undefined, text);
+  }
+
+  const installments = [
+    'mercado 100,00 parcelado em 3x',
+    'mercado 100 3x no cartão',
+    '3x mercado 100 credito',
+  ];
+  for (const text of installments) {
+    const draft = interpreter.interpret(text, now);
+    assert.equal(draft.name, 'mercado', text);
+    assert.equal(draft.amount, 10000, text);
+    assert.equal(draft.paymentType, 'INSTALLMENT', text);
+    assert.equal(draft.installmentsCount, 3, text);
+  }
+});
