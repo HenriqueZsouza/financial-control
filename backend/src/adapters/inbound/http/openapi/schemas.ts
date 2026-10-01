@@ -159,10 +159,21 @@ export const openApiSchemas = {
     },
   },
   PayableSource: { type: 'string', enum: ['CREDIT_CARD_INVOICE'] },
-  PayableStatus: { type: 'string', enum: ['PENDING'] },
+  PayableStatus: { type: 'string', enum: ['PENDING', 'PAID'] },
+  PayPayableRequest: {
+    type: 'object',
+    required: ['paidAt'],
+    properties: {
+      paidAt: {
+        type: 'string',
+        description: 'Data do pagamento (`AAAA-MM-DD` ou ISO 8601). Com só a data, a API aplica o horário atual do servidor.',
+        example: '2026-10-01T11:16:00.000Z',
+      },
+    },
+  },
   Payable: {
     type: 'object',
-    required: ['id', 'name', 'amount', 'dueDate', 'source', 'status', 'closedAt', 'createdAt'],
+    required: ['id', 'name', 'amount', 'dueDate', 'source', 'status', 'closedAt', 'paidAt', 'createdAt'],
     properties: {
       id: { type: 'integer', minimum: 1, example: 1 },
       name: { type: 'string', example: 'Fatura do cartão · venc. 10/09/2026' },
@@ -171,6 +182,7 @@ export const openApiSchemas = {
       source: { $ref: '#/components/schemas/PayableSource' },
       status: { $ref: '#/components/schemas/PayableStatus' },
       closedAt: dateTime,
+      paidAt: { ...dateTime, nullable: true, description: 'Instante do pagamento. `null` enquanto pendente.' },
       createdAt: dateTime,
     },
   },

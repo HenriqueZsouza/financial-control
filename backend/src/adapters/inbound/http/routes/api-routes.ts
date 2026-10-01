@@ -46,6 +46,8 @@ export function apiRoutes(controllers: HttpControllers, tokens: TokenIssuer) {
   router.get('/credit-card/open-invoice', protectedRoute, controllers.creditCard.openInvoice);
   router.post('/credit-card/invoices/close', protectedRoute, controllers.creditCard.close);
   router.get('/payables', protectedRoute, controllers.payables.list);
+  router.post('/payables/:id/pay', protectedRoute, controllers.payables.pay);
+  router.post('/payables/:id/pay', protectedRoute, controllers.payables.pay);
   router.patch('/users/me', protectedRoute, controllers.users.updateMe);
 
   router.get('/family', protectedRoute, controllers.family.get);

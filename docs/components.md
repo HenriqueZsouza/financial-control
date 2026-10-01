@@ -14,7 +14,8 @@
 | Página `/cartao-credito` | Relatório mensal 1x vs parcelas (`GET /api/credit-card/report`) | loading, erro, vazio |
 | `OpenInvoiceCard` | Card da home com fatura em aberto e ação de fechar | loading, erro, vazio (total 0), botão disabled |
 | `CloseInvoiceDialog` | Modal de vencimento + confirmação do fechamento da fatura | aberto, pendente, DatePicker |
-| Página `/contas-a-pagar` | Relatório de contas a pagar por mês de vencimento | loading, erro, vazio |
+| Página `/contas-a-pagar` | Relatório de contas a pagar por mês de vencimento, com pagamento individual | loading, erro, vazio, pendente, paga |
+| `PayPayableDialog` | Modal para pagar uma conta com data do pagamento | aberto, pendente, DatePicker |
 | `PeriodFilter` | Seleção reutilizável de mês/ano (MUI Select); `disableFuture` no relatório geral | período corrente |
 | `ConfirmDialog` | Confirmação destrutiva (MUI Dialog) | aberto, pendente |
 | `Amount` | Valor em BRL com blur de privacidade | visível / oculto |

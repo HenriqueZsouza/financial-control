@@ -9,8 +9,17 @@ export interface CloseInvoiceData {
   transactionIds: number[];
 }
 
+export interface PayPayableData {
+  userId: number;
+  payableId: number;
+  paidAt: Date;
+  categoryId: number;
+}
+
 export interface PayableRepository {
   closeInvoice(data: CloseInvoiceData): Promise<Payable>;
   findLatestCreditCardInvoice(userId: number): Promise<Payable | null>;
+  findActiveById(userId: number, id: number): Promise<Payable | null>;
   list(userId: number, period: Period): Promise<Payable[]>;
+  pay(data: PayPayableData): Promise<Payable>;
 }

@@ -98,7 +98,7 @@ export type OpenCreditCardInvoice = {
 };
 
 export type PayableSource = 'CREDIT_CARD_INVOICE';
-export type PayableStatus = 'PENDING';
+export type PayableStatus = 'PENDING' | 'PAID';
 
 export type Payable = {
   id: number;
@@ -108,6 +108,7 @@ export type Payable = {
   source: PayableSource;
   status: PayableStatus;
   closedAt: string;
+  paidAt: string | null;
   createdAt: string;
 };
 

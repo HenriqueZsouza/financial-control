@@ -11,3 +11,7 @@ export interface PayableList {
 export interface ListPayables {
   execute(userId: number, period?: Period): Promise<PayableList>;
 }
+
+export interface PayPayable {
+  execute(userId: number, payableId: number, input: { paidAt: Date }): Promise<Payable>;
+}

@@ -1,5 +1,8 @@
 export type PayableSource = 'CREDIT_CARD_INVOICE';
-export type PayableStatus = 'PENDING';
+export type PayableStatus = 'PENDING' | 'PAID';
+
+/** Categoria da despesa à vista gerada ao pagar a conta. */
+export const PAYABLE_PAYMENT_CATEGORY_SLUG = 'outros';
 
 export interface Payable {
   id: number;
@@ -10,6 +13,8 @@ export interface Payable {
   source: PayableSource;
   status: PayableStatus;
   closedAt: Date;
+  paidAt: Date | null;
+  paymentTransactionId: number | null;
   createdAt: Date;
   updatedAt: Date;
   deletedAt: Date | null;

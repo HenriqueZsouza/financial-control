@@ -49,7 +49,7 @@ O **cadastro manual** de contas a pagar **não** entra nesta entrega; a tela de 
 ## 3. Fora de escopo
 
 - Cadastro, edição e exclusão manuais de contas a pagar (tela de formulário)
-- Marcar conta como paga, conciliar pagamento, juros de atraso
+- Marcar conta como paga, conciliar pagamento, juros de atraso — o pagamento individual entrou depois; ver §16
 - Entidade “cartão” (bandeira, final, limite, dia de fechamento automático, vários cartões)
 - Fechamento automático por calendário, cron ou virada de mês
 - Recálculo da conta a pagar se o usuário alterar lançamentos depois (o valor é snapshot; ver §5.4)
@@ -572,7 +572,7 @@ Não misturar com cadastro manual nem com “marcar como pago”. Wiring só em 
 | Efeito no saldo | Nenhum. Não nasce `EXPENSE` no close |
 | Vencimento | Escolhido no modal; snapshot na conta a pagar; filtro do relatório usa essa data |
 | Cadastro manual | Fora; a lista pode começar vazia |
-| Pagar a conta | Fora; status só `PENDING` |
+| Pagar a conta | Fora desta versão inicial; implementado em §16 |
 | Família | Fora |
 | API da fatura em aberto | Endpoint dedicado; **não** inflar `GET /api/dashboard/summary` |
 | Relatório de cartão | Continua por competência; linhas fechadas **continuam** visíveis no mês da `date` |
@@ -594,4 +594,17 @@ Após merge da implementação, atualizar no [`PRD.md`](./PRD.md):
 - specs incrementais: link para este documento
 - `/contas-a-pagar`: relatório por vencimento (não placeholder)
 - dashboard: card de cartão com fatura em aberto
-- fora de escopo v1: cadastro manual de contas a pagar e pagamento da fatura continuam fora; fechamento automático continua fora
+- fora de escopo v1: cadastro manual de contas a pagar continua fora; o pagamento individual da conta está em §16; fechamento automático continua fora
+
+---
+
+## 16. Pagamento individual
+
+Cada conta pendente pode ser paga sozinha em `/contas-a-pagar`.
+
+1. O botão **Pagar** abre um modal com o valor e um `DatePicker` obrigatório (`Data do pagamento`).
+2. Confirmar chama `POST /api/payables/:id/pay` com `paidAt`.
+3. A conta passa a `PAID` e nasce um lançamento `EXPENSE` + `CASH`, no mesmo valor e nome, categoria **Outros**.
+4. Esse lançamento entra em `totalExpense` e reduz o `balance` do dashboard. Compras do cartão já fechadas continuam fora do saldo; só o pagamento tira o dinheiro.
+5. Conta já paga não pode ser paga de novo (`422 PAYABLE_ALREADY_PAID`). O botão some e a linha mostra o chip **Paga** com a data.
+6. Cancelar o modal não chama a API.

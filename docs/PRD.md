@@ -132,7 +132,7 @@ financial-control/
 - Deploy em produção
 - Multi-usuário familiar compartilhado (conta conjunta) — spec em [`PRD-FAMILY-GROUP.md`](./PRD-FAMILY-GROUP.md)
 - Cartão de crédito completo (limite, vários cartões, fechamento automático) — relatório mensal 1x vs parcelas: [`PRD-INVESTIMENTOS-CARTAO.md`](./PRD-INVESTIMENTOS-CARTAO.md); fechamento **explícito** da fatura: [`PRD-FATURA-CONTAS-A-PAGAR.md`](./PRD-FATURA-CONTAS-A-PAGAR.md)
-- Cadastro manual e pagamento de contas a pagar — o **relatório por vencimento** (alimentado pelo fechamento da fatura) está em [`PRD-FATURA-CONTAS-A-PAGAR.md`](./PRD-FATURA-CONTAS-A-PAGAR.md)
+- Cadastro manual de contas a pagar — o **relatório por vencimento** e o **pagamento individual** (despesa à vista que reduz o saldo) estão em [`PRD-FATURA-CONTAS-A-PAGAR.md`](./PRD-FATURA-CONTAS-A-PAGAR.md)
 - OAuth social, 2FA, notificações push
 - Exportação de relatórios (PDF/Excel)
 

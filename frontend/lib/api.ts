@@ -58,6 +58,10 @@ export const services = {
     body: JSON.stringify({ dueDate }),
   }),
   payables: (month: number, year: number) => api<PayableList>(`/api/payables?month=${month}&year=${year}`),
+  payPayable: (id: number, paidAt: string) => api<Payable>(`/api/payables/${id}/pay`, {
+    method: 'POST',
+    body: JSON.stringify({ paidAt }),
+  }),
   transactions: (query: URLSearchParams) => api<{ transactions: Transaction[] }>(`/api/transactions?${query.toString()}`),
   transaction: (id: number | string) => api<{ transaction: Transaction }>(`/api/transactions/${id}`),
   createTransaction: (data: Record<string, unknown>) => api<{ transactions: Transaction[] }>('/api/transactions', { method: 'POST', body: JSON.stringify(data) }),

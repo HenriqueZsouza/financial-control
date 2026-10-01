@@ -15,6 +15,7 @@ class Categories implements CategoryRepository {
   constructor(private readonly entries = [{ id: 1, name: 'Mercado', slug: 'mercado', icon: null, createdAt: now, updatedAt: now }]) {}
   async list() { return this.entries; }
   async exists(id: number) { return this.entries.some((entry) => entry.id === id); }
+  async findBySlug(slug: string) { return this.entries.find((entry) => entry.slug === slug) ?? null; }
 }
 class Repository implements TelegramRepository {
   tokens: TelegramLinkTokenRecord[] = []; connection: TelegramConnection | null = null; conversation: TelegramConversation | null = null; updates = new Set<string>();
