@@ -1,11 +1,15 @@
 import {
   PayableSource as PrismaPayableSource,
   PayableStatus as PrismaPayableStatus,
+  PaymentType as PrismaPaymentType,
+  TransactionSource as PrismaTransactionSource,
+  TransactionType as PrismaTransactionType,
 } from '@prisma/client';
 import { DomainError } from '../../../domain/shared/errors.js';
 import type { Payable, PayableSource, PayableStatus } from '../../../domain/payable/payable.js';
 import type {
   CloseInvoiceData,
+  PayPayableData,
   PayableRepository,
 } from '../../../application/ports/outbound/payable-repository.js';
 import { prisma } from './prisma-client.js';
@@ -21,6 +25,8 @@ const toDomainStatus = (status: PrismaPayableStatus): PayableStatus => {
   switch (status) {
     case PrismaPayableStatus.PENDING:
       return 'PENDING';
+    case PrismaPayableStatus.PAID:
+      return 'PAID';
   }
 };
 
@@ -33,6 +39,8 @@ const toDomain = (row: {
   source: PrismaPayableSource;
   status: PrismaPayableStatus;
   closedAt: Date;
+  paidAt: Date | null;
+  paymentTransactionId: number | null;
   createdAt: Date;
   updatedAt: Date;
   deletedAt: Date | null;
@@ -45,6 +53,8 @@ const toDomain = (row: {
   source: toDomainSource(row.source),
   status: toDomainStatus(row.status),
   closedAt: row.closedAt,
+  paidAt: row.paidAt,
+  paymentTransactionId: row.paymentTransactionId,
   createdAt: row.createdAt,
   updatedAt: row.updatedAt,
   deletedAt: row.deletedAt,
@@ -84,6 +94,55 @@ export class PrismaPayableRepository implements PayableRepository {
       });
 
       return toDomain(payable);
+    });
+  }
+
+  async findActiveById(userId: number, id: number): Promise<Payable | null> {
+    const payable = await prisma.payable.findFirst({
+      where: { id, userId, deletedAt: null },
+    });
+    return payable ? toDomain(payable) : null;
+  }
+
+  async pay(data: PayPayableData): Promise<Payable> {
+    return prisma.$transaction(async (tx) => {
+      const current = await tx.payable.findFirst({
+        where: {
+          id: data.payableId,
+          userId: data.userId,
+          deletedAt: null,
+        },
+      });
+      if (!current) {
+        throw new DomainError('NOT_FOUND', 'Conta a pagar não encontrada.');
+      }
+      if (current.status !== PrismaPayableStatus.PENDING) {
+        throw new DomainError('PAYABLE_ALREADY_PAID', 'Esta conta já foi paga.');
+      }
+
+      const transaction = await tx.transaction.create({
+        data: {
+          userId: data.userId,
+          categoryId: data.categoryId,
+          type: PrismaTransactionType.EXPENSE,
+          name: current.name,
+          amount: current.amount,
+          paymentType: PrismaPaymentType.CASH,
+          date: data.paidAt,
+          source: PrismaTransactionSource.WEB,
+        },
+      });
+
+      const paid = await tx.payable.update({
+        where: { id: current.id },
+        data: {
+          status: PrismaPayableStatus.PAID,
+          paidAt: data.paidAt,
+          paymentTransactionId: transaction.id,
+        },
+      });
+
+      return toDomain(paid);
     });
   }
 

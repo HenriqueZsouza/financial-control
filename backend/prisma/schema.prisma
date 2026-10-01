@@ -43,6 +43,7 @@ enum PayableSource {
 
 enum PayableStatus {
   PENDING
+  PAID
 }
 enum FamilyGroupStatus {
   ACTIVE
@@ -185,6 +186,7 @@ model Transaction {
   user               User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   category           Category        @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   payable            Payable?       @relation(fields: [payableId], references: [id], onDelete: Restrict)
+  settledPayables    Payable[]      @relation("PayableSettlement")
 
   @@index([userId, date])
   @@index([userId, deletedAt])
@@ -256,13 +258,16 @@ model Payable {
   amount       Int
   dueDate      DateTime
   source       PayableSource
-  status       PayableStatus @default(PENDING)
-  closedAt     DateTime
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  deletedAt    DateTime?
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  transactions Transaction[]
+  status                 PayableStatus @default(PENDING)
+  closedAt               DateTime
+  paidAt                 DateTime?
+  paymentTransactionId   Int?          @unique
+  createdAt              DateTime      @default(now())
+  updatedAt              DateTime      @updatedAt
+  deletedAt              DateTime?
+  user                   User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions           Transaction[]
+  paymentTransaction     Transaction?  @relation("PayableSettlement", fields: [paymentTransactionId], references: [id], onDelete: Restrict)
 
   @@index([userId, dueDate])
   @@index([userId, deletedAt])

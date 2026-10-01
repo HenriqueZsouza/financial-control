@@ -5,7 +5,7 @@ import { periodOf } from '../../domain/shared/period.js';
 import { isCashExpense, splitInstallments } from '../../domain/transaction/transaction.js';
 import type { CategoryRepository } from '../ports/outbound/category-repository.js';
 import type { Clock, IdGenerator, PasswordHasher, TokenIssuer } from '../ports/outbound/security.js';
-import type { CloseInvoiceData, PayableRepository } from '../ports/outbound/payable-repository.js';
+import type { CloseInvoiceData, PayPayableData, PayableRepository } from '../ports/outbound/payable-repository.js';
 import type { CreateTransactionData, TransactionRepository } from '../ports/outbound/transaction-repository.js';
 import type { CreateUserData, UpdateUserData, UserRepository } from '../ports/outbound/user-repository.js';
 import type { Payable } from '../../domain/payable/payable.js';
@@ -23,6 +23,7 @@ import { GetCreditCardReportUseCase } from './credit-card/get-credit-card-report
 import { GetOpenCreditCardInvoiceUseCase } from './credit-card/get-open-credit-card-invoice.js';
 import { CloseCreditCardInvoiceUseCase } from './credit-card/close-credit-card-invoice.js';
 import { ListPayablesUseCase } from './payables/list-payables.js';
+import { PayPayableUseCase } from './payables/pay-payable.js';
 
 const fixedClock: Clock = { now: () => new Date('2026-08-13T12:34:56.000Z') };
 const hasher: PasswordHasher = { hash: async (value) => `hash:${value}`, compare: async (value, hash) => hash === `hash:${value}` };
@@ -36,7 +37,14 @@ class Users implements UserRepository {
   async create(data: CreateUserData) { this.user = { ...publicUser, ...data, id: 1, createdAt: fixedClock.now(), updatedAt: fixedClock.now(), deletedAt: null }; return publicUser; }
   async updateActive(id: number, data: UpdateUserData) { if (!this.user || this.user.id !== id || this.user.deletedAt) return null; Object.assign(this.user, data); return { ...publicUser, ...data }; }
 }
-class Categories implements CategoryRepository { async list() { return []; } async exists(id: number) { return id === 1; } }
+class Categories implements CategoryRepository {
+  async list() { return []; }
+  async exists(id: number) { return id === 1; }
+  async findBySlug(slug: string) {
+    if (slug !== 'outros') return null;
+    return { id: 1, name: 'Outros', slug: 'outros', icon: null, createdAt: fixedClock.now(), updatedAt: fixedClock.now() };
+  }
+}
 class Transactions implements TransactionRepository {
   created: CreateTransactionData[] = [];
   items: Array<CreateTransactionData & { id: number; createdAt: Date; updatedAt: Date; deletedAt: Date | null; payableId: number | null }> = [];
@@ -169,6 +177,8 @@ class Payables implements PayableRepository {
       source: 'CREDIT_CARD_INVOICE',
       status: 'PENDING',
       closedAt: data.closedAt,
+      paidAt: null,
+      paymentTransactionId: null,
       createdAt: data.closedAt,
       updatedAt: data.closedAt,
       deletedAt: null,
@@ -177,6 +187,36 @@ class Payables implements PayableRepository {
     for (const item of open) {
       item.payableId = payable.id;
     }
+    return payable;
+  }
+
+  async findActiveById(userId: number, id: number) {
+    return this.items.find((item) => item.id === id && item.userId === userId && !item.deletedAt) ?? null;
+  }
+
+  async pay(data: PayPayableData) {
+    const payable = await this.findActiveById(data.userId, data.payableId);
+    if (!payable || payable.status !== 'PENDING') {
+      throw new DomainError('PAYABLE_ALREADY_PAID', 'Esta conta já foi paga.');
+    }
+    const transaction = await this.transactions.create({
+      userId: data.userId,
+      categoryId: data.categoryId,
+      type: 'EXPENSE',
+      name: payable.name,
+      amount: payable.amount,
+      paymentType: 'CASH',
+      installmentsCount: null,
+      installmentGroupId: null,
+      installmentNumber: null,
+      date: data.paidAt,
+      source: 'WEB',
+      externalReference: null,
+    });
+    payable.status = 'PAID';
+    payable.paidAt = data.paidAt;
+    payable.paymentTransactionId = transaction.id;
+    payable.updatedAt = data.paidAt;
     return payable;
   }
 
@@ -367,6 +407,8 @@ test('relatório de cartão usa o vencimento da fatura fechada, não a data da c
     source: 'CREDIT_CARD_INVOICE',
     status: 'PENDING',
     closedAt: fixedClock.now(),
+    paidAt: null,
+    paymentTransactionId: null,
     createdAt: fixedClock.now(),
     updatedAt: fixedClock.now(),
     deletedAt: null,
@@ -482,6 +524,8 @@ test('contas a pagar filtram pelo mês do vencimento e usam o relógio quando o 
     source: 'CREDIT_CARD_INVOICE',
     status: 'PENDING',
     closedAt: fixedClock.now(),
+    paidAt: null,
+    paymentTransactionId: null,
     createdAt: fixedClock.now(),
     updatedAt: fixedClock.now(),
     deletedAt: null,
@@ -494,6 +538,8 @@ test('contas a pagar filtram pelo mês do vencimento e usam o relógio quando o 
     source: 'CREDIT_CARD_INVOICE',
     status: 'PENDING',
     closedAt: fixedClock.now(),
+    paidAt: null,
+    paymentTransactionId: null,
     createdAt: fixedClock.now(),
     updatedAt: fixedClock.now(),
     deletedAt: null,
@@ -507,6 +553,75 @@ test('contas a pagar filtram pelo mês do vencimento e usam o relógio quando o 
   const omitted = await list.execute(1);
   assert.deepEqual(omitted.period, { month: 8, year: 2026 });
   assert.equal(omitted.count, 0);
+});
+
+test('pagar conta lança despesa à vista e reduz o saldo', async () => {
+  const repo = new Transactions();
+  const payables = new Payables(repo);
+  const due = new Date('2026-09-10T00:00:00.000Z');
+  const stamp = { createdAt: fixedClock.now(), updatedAt: fixedClock.now(), deletedAt: null as Date | null };
+  payables.items = [{
+    id: 1,
+    userId: 1,
+    name: 'Fatura do cartão · venc. 10/09/2026',
+    amount: 43500,
+    dueDate: due,
+    source: 'CREDIT_CARD_INVOICE',
+    status: 'PENDING',
+    closedAt: fixedClock.now(),
+    paidAt: null,
+    paymentTransactionId: null,
+    ...stamp,
+  }];
+  repo.items = [{
+    id: 9,
+    userId: 1,
+    categoryId: 1,
+    type: 'EXPENSE',
+    name: 'Compra no cartão',
+    amount: 43500,
+    paymentType: 'CREDIT_1X',
+    installmentsCount: null,
+    installmentGroupId: null,
+    installmentNumber: null,
+    date: fixedClock.now(),
+    payableId: 1,
+    ...stamp,
+  }];
+  const pay = new PayPayableUseCase(payables, new Categories(), fixedClock);
+  const before = await new GetDashboardSummaryUseCase(repo, fixedClock).execute(1, periodOf(8, 2026));
+  assert.equal(before.totalExpense, 0);
+  assert.equal(before.balance, 0);
+
+  const paid = await pay.execute(1, 1, { paidAt: new Date('2026-08-20T00:00:00.000Z') });
+  assert.equal(paid.status, 'PAID');
+  const settlement = repo.items.find((item) => item.paymentType === 'CASH');
+  assert.equal(paid.paymentTransactionId, settlement?.id);
+  assert.equal(settlement?.type, 'EXPENSE');
+  assert.equal(settlement?.amount, 43500);
+  assert.equal(settlement?.categoryId, 1);
+  assert.equal(settlement?.name, 'Fatura do cartão · venc. 10/09/2026');
+  assert.equal(settlement?.payableId, null);
+  assert.equal(settlement?.date.toISOString(), '2026-08-20T12:34:56.000Z');
+
+  const summary = await new GetDashboardSummaryUseCase(repo, fixedClock).execute(1, periodOf(8, 2026));
+  assert.equal(summary.totalExpense, 43500);
+  assert.equal(summary.balance, -43500);
+
+  await expectsDomainError(() => pay.execute(1, 1, { paidAt: new Date('2026-08-20T00:00:00.000Z') }), 'PAYABLE_ALREADY_PAID');
+  await expectsDomainError(() => pay.execute(1, 99, { paidAt: new Date('2026-08-20T00:00:00.000Z') }), 'NOT_FOUND');
+  await expectsDomainError(() => pay.execute(2, 1, { paidAt: new Date('2026-08-20T00:00:00.000Z') }), 'NOT_FOUND');
+
+  const missingCategory = {
+    list: async () => [],
+    exists: async () => false,
+    findBySlug: async () => null,
+  };
+  payables.items[0].status = 'PENDING';
+  await expectsDomainError(
+    () => new PayPayableUseCase(payables, missingCategory, fixedClock).execute(1, 1, { paidAt: new Date('2026-08-21T15:00:00.000Z') }),
+    'INVALID_CATEGORY',
+  );
 });
 
 test('lançamento em fatura fechada não exclui nem altera valor', async () => {

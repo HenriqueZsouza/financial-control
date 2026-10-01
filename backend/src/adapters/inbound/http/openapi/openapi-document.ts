@@ -130,6 +130,31 @@ export const openApiDocument = {
         },
       },
     },
+    '/api/payables/{id}/pay': {
+      post: {
+        tags: ['Payables'],
+        summary: 'Paga uma conta individualmente',
+        security: bearerSecurity,
+        description: 'Marca a conta como paga e cria uma despesa à vista (`EXPENSE` + `CASH`) no valor da conta, na categoria Outros. Essa despesa entra em `totalExpense` e reduz o `balance`. A data aceita `AAAA-MM-DD` ou ISO 8601.',
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer', minimum: 1 } }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/PayPayableRequest' },
+              example: { paidAt: '2026-10-01T11:16:00.000Z' },
+            },
+          },
+        },
+        responses: {
+          '200': { description: 'Conta paga', ...json('Payable') },
+          '400': error('Data de pagamento inválida.', 'VALIDATION_ERROR'),
+          '401': error('Token ausente ou inválido.', 'UNAUTHENTICATED'),
+          '404': error('Conta a pagar não encontrada.', 'NOT_FOUND'),
+          '422': error('Esta conta já foi paga.', 'PAYABLE_ALREADY_PAID'),
+        },
+      },
+    },
   },
   components: { securitySchemes: { bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' } }, schemas: openApiSchemas },
 } as const;

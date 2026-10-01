@@ -4,4 +4,8 @@ import { prisma } from './prisma-client.js';
 export class PrismaCategoryRepository implements CategoryRepository {
   list(): Promise<Category[]> { return prisma.category.findMany({ orderBy: { name: 'asc' } }); }
   async exists(id: number) { return Boolean(await prisma.category.findUnique({ where: { id }, select: { id: true } })); }
+
+  findBySlug(slug: string): Promise<Category | null> {
+    return prisma.category.findUnique({ where: { slug } });
+  }
 }

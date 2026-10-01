@@ -16,6 +16,7 @@ export function presentPayable(payable: Payable) {
     source: payable.source,
     status: payable.status,
     closedAt: payable.closedAt.toISOString(),
+    paidAt: payable.paidAt ? payable.paidAt.toISOString() : null,
     createdAt: payable.createdAt.toISOString(),
   };
 }

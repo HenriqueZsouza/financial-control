@@ -19,6 +19,7 @@ Para explorar o contrato completo e executar requests localmente, abra a [Swagge
 | GET | `/api/credit-card/open-invoice` | — | fatura em aberto (totais; não fecha) |
 | POST | `/api/credit-card/invoices/close` | `{ "dueDate": "AAAA-MM-DD" }` | conta a pagar (201) |
 | GET | `/api/payables` | `month`, `year` opcionais | contas a pagar do mês de vencimento |
+| POST | `/api/payables/:id/pay` | `{ "paidAt": "AAAA-MM-DD" ou ISO 8601 }` | conta paga; cria despesa à vista no mesmo valor |
 | GET | `/api/family` | — | `{ group }`, sendo `group: null` sem grupo ativo |
 | POST | `/api/family/invites` | `email` | convite (201) e criação implícita do grupo |
 | GET | `/api/family/invites/received` | — | convites pendentes recebidos (inclui `inviter: { firstName, lastName }`) |
@@ -54,6 +55,8 @@ Para parcelar, envie `paymentType: "INSTALLMENT"` e `installmentsCount`. A API d
 `GET /api/credit-card/open-invoice` soma só o que ainda não foi fechado, com `date` até o instante atual. A fatura **não** fecha sozinha: só `POST /api/credit-card/invoices/close` com `dueDate` cria a conta a pagar (snapshot). Sem linhas em aberto: `422 EMPTY_OPEN_INVOICE`.
 
 `GET /api/payables` filtra pelo mês/ano do **vencimento**. Sem período, usa o mês atual. Não há `POST /api/payables` nesta versão.
+
+`POST /api/payables/:id/pay` paga uma conta pendente. O corpo exige `paidAt`. A API cria um lançamento `EXPENSE` com `paymentType: "CASH"`, no valor da conta e na categoria **Outros**, e marca a conta como `PAID`. Como a despesa é à vista, ela entra em `totalExpense` e reduz o `balance`. Conta inexistente ou de outro usuário: `404 NOT_FOUND`. Conta já paga: `422 PAYABLE_ALREADY_PAID`.
 
 Lançamento já vinculado a fatura fechada não pode ser excluído nem ter valor/pagamento alterados (`422 INVOICE_LOCKED`).
 

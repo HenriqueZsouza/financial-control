@@ -32,6 +32,7 @@ import { GetOpenCreditCardInvoiceUseCase } from './application/use-cases/credit-
 import { CloseCreditCardInvoiceUseCase } from './application/use-cases/credit-card/close-credit-card-invoice.js';
 import { GetDashboardSummaryUseCase } from './application/use-cases/dashboard/get-dashboard-summary.js';
 import { ListPayablesUseCase } from './application/use-cases/payables/list-payables.js';
+import { PayPayableUseCase } from './application/use-cases/payables/pay-payable.js';
 import { DeleteTransactionUseCase } from './application/use-cases/transactions/delete-transaction.js';
 import { CreateTransactionUseCase } from './application/use-cases/transactions/create-transaction.js';
 import { GetTransactionUseCase } from './application/use-cases/transactions/get-transaction.js';
@@ -91,7 +92,10 @@ const controllers = {
     new GetOpenCreditCardInvoiceUseCase(transactions, clock),
     new CloseCreditCardInvoiceUseCase(transactions, payables, clock),
   ),
-  payables: new PayableController(new ListPayablesUseCase(payables, clock)),
+  payables: new PayableController(
+    new ListPayablesUseCase(payables, clock),
+    new PayPayableUseCase(payables, categories, clock),
+  ),
   family: new FamilyController(
     new GetMyFamilyUseCase(family),
     new InviteFamilyMemberUseCase(family, users, notifications, clock),
